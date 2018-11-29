@@ -1,0 +1,25 @@
+<idea-plugin>
+    <id>com.jregistr.graphql-lang</id>
+    <version>0.0.1</version>
+    <name>GraphQL Language</name>
+    <vendor email="jeffreyregist365@gmail.com" url="http://www.jregistr.com">Jeff Registre</vendor>
+
+    <description>
+        Simple plugin providing syntax highlighting and support for the GraphQL language.
+    </description>
+
+    <!-- please see http://www.jetbrains.org/intellij/sdk/docs/basics/getting_started/plugin_compatibility.html
+         on how to target different products -->
+    <!-- uncomment to enable plugin in all products
+    <depends>com.intellij.modules.lang</depends>
+    -->
+
+    <extensions defaultExtensionNs="com.intellij">
+        <!-- Add your extensions here -->
+        <fileTypeFactory implementation="com.jregistr.graphqllang.langdef.GraphQlLangFileTypeFactory" />
+    </extensions>
+
+    <actions>
+        <!-- Add your actions here -->
+    </actions>
+</idea-plugin>

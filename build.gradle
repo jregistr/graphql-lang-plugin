@@ -1,0 +1,31 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.intellij' version '0.3.12'
+    id 'scala'
+}
+
+group 'com.jregistr'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    implementation 'org.scala-lang:scala-library-all:2.12.7'
+    testImplementation 'org.scalatest:scalatest_2.12:3.2.0-SNAP10'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+intellij {
+    version '2018.3' //https://www.jetbrains.com/intellij-repository/releases
+}
+patchPluginXml {
+    changeNotes """
+      This is the initial release.<br>
+      """
+}
+
+sourceSets.main.java.srcDirs = ['src/main/gen', 'src/main/java']

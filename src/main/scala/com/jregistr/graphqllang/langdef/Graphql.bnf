@@ -1,0 +1,77 @@
+{
+    parserClass="com.jregistr.graphqllang.parser.GraphQlParser"
+    extends="com.intellij.extapi.psi.ASTWrapperPsiElement"
+
+    psiClassPrefix="GraphQl"
+    psiImplClassSuffix="Impl"
+    psiPackage="com.jregistr.graphqllang.psi"
+    psiImplPackage="com.jregistr.graphqllang.psi.impl"
+
+    elementTypeHolderClass="com.jregistr.graphqllang.psi.GraphQlTypes"
+    elementTypeClass="com.jregistr.graphqllang.langdef.GraphQlLangElementType"
+    tokenTypeClass="com.jregistr.graphqllang.langdef.GraphQlLangTokenType"
+
+    tokens=[
+        NOT_YET_IMPL='THIS_IS_NOT_YET_IMPLEMENTED'
+        TYPE='type'
+        ENUM='enum'
+
+        LEFT_PAREN='('
+        RIGHT_PAREN=')'
+
+        LEFT_CURLY='{'
+        RIGHT_CURLY='}'
+
+        LEFT_BRACKET='['
+        RIGHT_BRACKET=']'
+
+        COLON=':'
+        COMMA=','
+        NON_NULLABLE='!'
+
+        identifier="regexp:[_A-Za-z][_0-9A-Za-z]*"
+        SINGLE_LINE_COMMENT="regexp:#.*"
+    ]
+}
+
+GraphQlDocument ::= Definition*
+Definition ::= EnumTypeDefinition
+
+EnumTypeDefinition ::= ENUM NamedTypeDefinition LEFT_CURLY identifier RIGHT_CURLY
+
+NamedTypeDefinition ::= identifier
+
+
+//NameOfSomeType ::= identifier
+
+//private Definition ::=
+//SchemaDefinition
+//
+//private SchemaDefinition ::= EnumTypeDefinition
+//
+//EnumTypeDefinition ::= ENUM NamedTypeDefinition LEFT_CURLY identifier RIGHT_CURLY
+//
+//NamedTypeDefinition ::= identifier
+
+//private Definition ::=
+//SchemaDefinition
+//|
+//QueryDefinition
+//
+//private SchemaDefinition ::= ObjectTypeDefinition | EnumTypeDefinition
+//
+//QueryDefinition ::= NOT_YET_IMPL
+//ObjectTypeDefinition ::= NOT_YET_IMPL
+//
+////EnumTypeDefinition ::= ENUM NamedTypeDefinition SET_OF_ENUM_VALUES_DEF
+////
+////SET_OF_ENUM_VALUES_DEF ::= LEFT_CURLY SINGLE_ENUM_VALUE COMMA_SINGLE_ENUM_VALUE* RIGHT_CURLY
+////SINGLE_ENUM_VALUE ::= identifier
+////COMMA_SINGLE_ENUM_VALUE ::= COMMA SINGLE_ENUM_VALUE
+//
+//EnumTypeDefinition ::= NOT_YET_IMPL
+//
+//
+//NamedTypeDefinition ::= identifier
+//NameOfSomeType ::= identifier
+
