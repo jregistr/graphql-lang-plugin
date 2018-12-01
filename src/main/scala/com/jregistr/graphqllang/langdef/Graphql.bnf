@@ -11,10 +11,18 @@
     elementTypeClass="com.jregistr.graphqllang.langdef.GraphQlLangElementType"
     tokenTypeClass="com.jregistr.graphqllang.langdef.GraphQlLangTokenType"
 
-    tokens=[
-        NOT_YET_IMPL='THIS_IS_NOT_YET_IMPLEMENTED'
+    tokens = [
+        NOT_YET_IMPL='NOT_YET_IMPLEMENTED'
         TYPE='type'
+        INPUT='input'
         ENUM='enum'
+        SCALAR='scalar'
+        SCHEMA='schema'
+        UNION='union'
+        INTERFACE='interface'
+        IMPLEMENTS='implements'
+        QUERY='query'
+        FRAGMENT='fragment'
 
         LEFT_PAREN='('
         RIGHT_PAREN=')'
@@ -27,51 +35,123 @@
 
         COLON=':'
         COMMA=','
-        NON_NULLABLE='!'
+        EQUALS='='
+        PIPE='|'
+        REQUIRED='!'
+        DIRECTIVE_IDENTIFIER='regexp:@([_A-Za-z][_0-9A-Za-z]*)?'
 
         identifier="regexp:[_A-Za-z][_0-9A-Za-z]*"
+        NUMBER_LITERAL='regexp:-?[0-9]+(\.[0-9+])*'
+        STRING_LITERAL='regexp:".*"'
+        BOOLEAN_LITERAL='regexp:(true|false)'
+
+        WHITE_SPACE = 'regexp:\s+'
         SINGLE_LINE_COMMENT="regexp:#.*"
     ]
 }
 
+// addtl -> additional
+// decl -> declaration
+// def -> definition
+// impl -> implemented(ation)
+// sel -> selection
+
 GraphQlDocument ::= Definition*
-Definition ::= EnumTypeDefinition
 
-EnumTypeDefinition ::= ENUM NamedTypeDefinition LEFT_CURLY identifier RIGHT_CURLY
+Definition ::=
 
-NamedTypeDefinition ::= identifier
+ObjectTypeDef
+|
+InterfaceTypeDef
+|
+EnumTypeDef
+|
+UnionTypeDef
+|
+ScalarTypeDef
+|
+RootSchemaTypeDef
+|
+InputObjectTypeDef
+|
+FragmentDef
+|
+QueryDef
 
 
-//NameOfSomeType ::= identifier
 
-//private Definition ::=
-//SchemaDefinition
-//
-//private SchemaDefinition ::= EnumTypeDefinition
-//
-//EnumTypeDefinition ::= ENUM NamedTypeDefinition LEFT_CURLY identifier RIGHT_CURLY
-//
-//NamedTypeDefinition ::= identifier
+NamedTypeDef ::= identifier
+NameOfSomeType ::= identifier
+NameOfSomeField ::= identifier
 
-//private Definition ::=
-//SchemaDefinition
-//|
-//QueryDefinition
-//
-//private SchemaDefinition ::= ObjectTypeDefinition | EnumTypeDefinition
-//
-//QueryDefinition ::= NOT_YET_IMPL
-//ObjectTypeDefinition ::= NOT_YET_IMPL
-//
-////EnumTypeDefinition ::= ENUM NamedTypeDefinition SET_OF_ENUM_VALUES_DEF
-////
-////SET_OF_ENUM_VALUES_DEF ::= LEFT_CURLY SINGLE_ENUM_VALUE COMMA_SINGLE_ENUM_VALUE* RIGHT_CURLY
-////SINGLE_ENUM_VALUE ::= identifier
-////COMMA_SINGLE_ENUM_VALUE ::= COMMA SINGLE_ENUM_VALUE
-//
-//EnumTypeDefinition ::= NOT_YET_IMPL
-//
-//
-//NamedTypeDefinition ::= identifier
-//NameOfSomeType ::= identifier
+LITERAL ::= BOOLEAN_LITERAL | NUMBER_LITERAL | STRING_LITERAL
 
+FieldValueDecl ::= LITERAL | ObjectValueDecl
+
+ObjectValueDecl ::= LEFT_CURLY ObjectValueFieldDef ObjectValueAddtlFieldDef* RIGHT_CURLY
+ObjectValueFieldDef ::= NameOfSomeField COLON FieldValueDecl
+ObjectValueAddtlFieldDef ::= COMMA ObjectValueFieldDef
+
+TypeDecl ::= ListTypeDecl | BasicTypeDecl
+BasicTypeDecl ::= NameOfSomeType REQUIRED?
+ListTypeDecl ::= LEFT_BRACKET NameOfSomeType REQUIRED? RIGHT_BRACKET
+
+//Distinction to Note and remember
+//Argument definition is defining the arguments a field takes. I.E. foo(a: A, b: B): Bar
+//Argument declaration stating the named arguments being passed. I.E. foo(a: "Cool", b: "cooler") {...}
+ArgumentsDeclSet ::= LEFT_PAREN ArgumentDecl ArgumentAddtlDecl* RIGHT_PAREN
+ArgumentDecl ::= NameOfSomeField COLON FieldValueDecl
+ArgumentAddtlDecl ::= COMMA ArgumentDecl
+
+ArgumentsDefSet ::= LEFT_PAREN ArgumentDef ArgumentAddtlDef* RIGHT_PAREN
+ArgumentDef ::= identifier COLON TypeDecl
+ArgumentAddtlDef ::= COMMA ArgumentDef
+
+MemberFieldsSetDef ::= LEFT_CURLY MemberFieldDef+ RIGHT_CURLY
+MemberFieldDef ::= identifier ArgumentsDefSet? COLON TypeDecl DirectivesSetDecl?
+
+SimpleMemberFieldsSetDef ::= LEFT_CURLY SimpleMemberFieldDef+ RIGHT_CURLY
+SimpleMemberFieldDef ::= identifier COLON TypeDecl
+
+DirectivesSetDecl ::= DirectiveDecl*
+DirectiveDecl ::= DIRECTIVE_IDENTIFIER ArgumentsDeclSet?
+
+ObjectTypeDef ::= TYPE NamedTypeDef ObjectTypeImplInterfacesDef? DirectivesSetDecl? MemberFieldsSetDef
+ObjectTypeImplInterfacesDef ::= IMPLEMENTS NameOfSomeType ObjectTypeInterfaceAddtlMember*
+ObjectTypeInterfaceAddtlMember ::= COMMA NameOfSomeType
+
+InterfaceTypeDef ::= INTERFACE NamedTypeDef MemberFieldsSetDef
+
+EnumTypeDef ::= ENUM NamedTypeDef EnumValuesSetDef
+EnumValuesSetDef ::= LEFT_CURLY EnumValueDef EnumAddtlValueDef* RIGHT_CURLY
+EnumValueDef ::= identifier
+EnumAddtlValueDef ::= COMMA? identifier
+
+UnionTypeDef ::= UNION NamedTypeDef EQUALS UnionMemberDecl UnionAddtlMemberDecl*
+UnionMemberDecl ::= NameOfSomeType
+UnionAddtlMemberDecl ::= PIPE UnionMemberDecl
+
+ScalarTypeDef ::= SCALAR NamedTypeDef
+
+RootSchemaTypeDef ::= SCHEMA SimpleMemberFieldsSetDef
+
+InputObjectTypeDef ::= INPUT NamedTypeDef SimpleMemberFieldsSetDef
+
+
+// graphql query specific definitions
+FragmentDef ::= NOT_YET_IMPL
+
+QueryDef ::= QueryOperationDecl? QueryFieldExpansion
+QueryOperationDecl ::= QUERY identifier DirectivesSetDecl?
+QueryFieldExpansion ::= LEFT_CURLY FieldExpansionStatements+ RIGHT_CURLY
+
+FieldExpansionStatements ::= QueryFieldsSelSet | InlineFragmentDecl
+
+QueryFieldsSelSet::= QueryFieldSel QueryFieldAddtlSel*
+
+QueryFieldSel ::= QueryFieldAlias? NameOfSomeField DirectivesSetDecl? QueryFieldExpansion?
+QueryFieldAlias ::= identifier COLON
+QueryFieldAddtlSel ::= COMMA? QueryFieldSel
+
+InlineFragmentDecl ::= '...' FragmentTypeCondition DirectivesSetDecl? QueryFieldExpansion
+FragmentTypeCondition ::= 'on' NameOfSomeType

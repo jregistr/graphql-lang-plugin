@@ -1,0 +1,81 @@
+interface Thing {
+    name: String
+}
+
+interface Vehicle {
+    color: Color
+}
+
+type Car implements Vehicle, Thing @foo @bar(aaa: "dddd") {
+    gas: Int
+}
+
+enum Booleans {
+    TRUE
+    FALSE
+}
+
+enum ExampleTwo {
+    FIRST,
+    SECOND
+}
+
+type Rocket implements Vehicle {
+    bla: Bla @bar(aaa: 777)
+    blast(radius: Int): Boolean
+    explode(area: Int, double: Boolean): Boolean @bar(aaa: bbbb)
+}
+
+{
+  employee(id: "") {
+    firstName
+  }
+}
+
+
+query foo {
+  allCompanies {
+    name
+  }
+}
+
+query bla @fooobar {
+  cool(iden: {tok: "BOOM"}) {
+    soofoo @bazbar {
+      ccc
+    }
+  }
+}
+
+{
+  employee(id: "") {
+    ... on Employee {
+      firstName
+    }
+  }
+}
+
+
+{
+  employee(id: "") {
+    ... onEmploy
+  }
+}
+
+fragment onEmploy on Employee {
+  firstName
+}
+
+query DD {
+  employee {
+    ... on Employee {
+      bla:firstName @skip(if: true)
+      subordinates {
+        firstName
+        ... on YY {
+         g
+        }
+      }
+    }
+  }
+}
