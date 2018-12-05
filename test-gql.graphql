@@ -23,7 +23,12 @@ enum ExampleTwo {
 type Rocket implements Vehicle {
     bla: Bla @bar(aaa: 777)
     blast(radius: Int): Boolean
-    explode(area: Int, double: Boolean): Boolean @bar(aaa: bbbb)
+    explode(area: Int, double: Boolean): Boolean @bar(aaa: "vvv")
+}
+
+type Rocket implements Vehicle {
+    blast(radius: Int): Boolean
+    explode(area: Int, double: Boolean): Boolean @bar(aaa: 11111111.01)
 }
 
 {
@@ -78,4 +83,54 @@ query DD {
       }
     }
   }
+}
+
+query bla {
+  employee(a: {a: "gg"}) {
+    firstName
+  }
+}
+
+query bla @fooobar {
+  cool(iden: {tok: "BOOM"}) {
+    soofoo @bazbar {
+      ccc
+    }
+    ... on Bla {
+     g
+    }
+  }
+}
+
+{
+ ... on Query {
+  a
+ }
+}
+
+query name {
+	dss:employee(a: 11, tt: {d: 77}) @foo @bar(a: "11", b: true) {
+    address
+    foo: address @foo @baz(hh: false)
+    subordinates {
+      lastName
+      ... superb @baz @tttt(a: 777)
+      ... on Bla @baz {
+        g: y
+        ... on Foo {
+         t {
+          y: tt
+         }
+        }
+      }
+    }
+  }
+}
+
+fragment bla on Foo @foo {
+ ... on Foo {
+  a
+ }
+ t: ff
+ ...onCool
 }

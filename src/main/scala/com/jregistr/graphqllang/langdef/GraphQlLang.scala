@@ -7,7 +7,6 @@ import com.intellij.psi.tree.IElementType
 import com.jregistr.graphqllang.lexer._GraphQlLexer
 import com.jregistr.graphqllang.util.GraphQlLangIcons
 import javax.swing.Icon
-import java.io.Reader
 
 object GraphQlLang extends Language("GraphQL")
 
@@ -36,6 +35,6 @@ class GraphQlLangTokenType(debugName: String) extends IElementType(debugName, Gr
 
 }
 
-class GraphQlLangLexerAdapter extends FlexAdapter(new _GraphQlLexer(Reader)) {
+class GraphQlLangLexerAdapter extends FlexAdapter(new _GraphQlLexer(null)) {
 
 }

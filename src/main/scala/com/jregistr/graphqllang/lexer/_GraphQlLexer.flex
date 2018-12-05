@@ -5,7 +5,7 @@ import com.intellij.psi.tree.IElementType;
 
 import static com.intellij.psi.TokenType.BAD_CHARACTER;
 import static com.intellij.psi.TokenType.WHITE_SPACE;
-import static com.jregistr.graphqllang.psi.GraphQlTypes.*;
+import static com.jregistr.graphqllang.psi.GraphQlTokenTypes.*;
 
 %%
 
@@ -25,11 +25,11 @@ import static com.jregistr.graphqllang.psi.GraphQlTypes.*;
 EOL=\R
 WHITE_SPACE=\s+
 
-DIRECTIVE_IDENTIFIER=@([_A-Za-z][_0-9A-Za-z]*)?
+DIRECTIVE_IDENTIFIER=@([_A-Za-z][_0-9A-Za-z]*)
+VARIABLE_IDENTIFIER=\$([_A-Za-z][_0-9A-Za-z]*)
 IDENTIFIER=[_A-Za-z][_0-9A-Za-z]*
-NUMBER_LITERAL=-?[0-9]+(\.[0-9+])*
 STRING_LITERAL=\".*\"
-BOOLEAN_LITERAL=(true|false)
+NUMBER_LITERAL=-?[0-9]+(\.[0-9]+)?
 WHITE_SPACE=[ \t\n\x0B\f\r]+
 SINGLE_LINE_COMMENT=#.*
 
@@ -37,7 +37,6 @@ SINGLE_LINE_COMMENT=#.*
 <YYINITIAL> {
   {WHITE_SPACE}               { return WHITE_SPACE; }
 
-  "NOT_YET_IMPLEMENTED"       { return NOT_YET_IMPL; }
   "type"                      { return TYPE; }
   "input"                     { return INPUT; }
   "enum"                      { return ENUM; }
@@ -48,6 +47,10 @@ SINGLE_LINE_COMMENT=#.*
   "implements"                { return IMPLEMENTS; }
   "query"                     { return QUERY; }
   "fragment"                  { return FRAGMENT; }
+  "directive"                 { return DIRECTIVE; }
+  "mutation"                  { return MUTATION; }
+  "subscription"              { return SUBSCRIPTION; }
+  "extend"                    { return EXTEND; }
   "("                         { return LEFT_PAREN; }
   ")"                         { return RIGHT_PAREN; }
   "{"                         { return LEFT_CURLY; }
@@ -59,12 +62,14 @@ SINGLE_LINE_COMMENT=#.*
   "="                         { return EQUALS; }
   "|"                         { return PIPE; }
   "!"                         { return REQUIRED; }
+  "..."                       { return FRAGMENT_DOTS; }
+  "on"                        { return FRAGMENT_ON; }
 
   {DIRECTIVE_IDENTIFIER}      { return DIRECTIVE_IDENTIFIER; }
+  {VARIABLE_IDENTIFIER}       { return VARIABLE_IDENTIFIER; }
   {IDENTIFIER}                { return IDENTIFIER; }
-  {NUMBER_LITERAL}            { return NUMBER_LITERAL; }
   {STRING_LITERAL}            { return STRING_LITERAL; }
-  {BOOLEAN_LITERAL}           { return BOOLEAN_LITERAL; }
+  {NUMBER_LITERAL}            { return NUMBER_LITERAL; }
   {WHITE_SPACE}               { return WHITE_SPACE; }
   {SINGLE_LINE_COMMENT}       { return SINGLE_LINE_COMMENT; }
 

@@ -7,12 +7,11 @@
     psiPackage="com.jregistr.graphqllang.psi"
     psiImplPackage="com.jregistr.graphqllang.psi.impl"
 
-    elementTypeHolderClass="com.jregistr.graphqllang.psi.GraphQlTypes"
+    elementTypeHolderClass="com.jregistr.graphqllang.psi.GraphQlTokenTypes"
     elementTypeClass="com.jregistr.graphqllang.langdef.GraphQlLangElementType"
     tokenTypeClass="com.jregistr.graphqllang.langdef.GraphQlLangTokenType"
 
     tokens = [
-        NOT_YET_IMPL='NOT_YET_IMPLEMENTED'
         TYPE='type'
         INPUT='input'
         ENUM='enum'
@@ -23,6 +22,11 @@
         IMPLEMENTS='implements'
         QUERY='query'
         FRAGMENT='fragment'
+        DIRECTIVE='directive'
+        QUERY='query'
+        MUTATION='mutation'
+        SUBSCRIPTION='subscription'
+        EXTEND='extend'
 
         LEFT_PAREN='('
         RIGHT_PAREN=')'
@@ -38,12 +42,14 @@
         EQUALS='='
         PIPE='|'
         REQUIRED='!'
-        DIRECTIVE_IDENTIFIER='regexp:@([_A-Za-z][_0-9A-Za-z]*)?'
+        DIRECTIVE_IDENTIFIER='regexp:@([_A-Za-z][_0-9A-Za-z]*)'
+        VARIABLE_IDENTIFIER='regexp:\$([_A-Za-z][_0-9A-Za-z]*)'
+        FRAGMENT_DOTS='...'
+        FRAGMENT_ON='on'
 
-        identifier="regexp:[_A-Za-z][_0-9A-Za-z]*"
-        NUMBER_LITERAL='regexp:-?[0-9]+(\.[0-9+])*'
+        IDENTIFIER="regexp:[_A-Za-z][_0-9A-Za-z]*"
         STRING_LITERAL='regexp:".*"'
-        BOOLEAN_LITERAL='regexp:(true|false)'
+        NUMBER_LITERAL='regexp:-?[0-9]+(\.[0-9]+)?'
 
         WHITE_SPACE = 'regexp:\s+'
         SINGLE_LINE_COMMENT="regexp:#.*"
@@ -55,6 +61,8 @@
 // def -> definition
 // impl -> implemented(ation)
 // sel -> selection
+// cond -> condition
+// loc -> location
 
 GraphQlDocument ::= Definition*
 
@@ -74,49 +82,84 @@ RootSchemaTypeDef
 |
 InputObjectTypeDef
 |
-FragmentDef
+DirectiveDef
 |
-QueryDef
+ExtendTypeDef
+|
+ExecutableDef
 
 
 
-NamedTypeDef ::= identifier
-NameOfSomeType ::= identifier
-NameOfSomeField ::= identifier
+NamedTypeDef ::= IDENTIFIER
+NameOfSomeType ::= IDENTIFIER
+NameOfSomeField ::= IDENTIFIER
+DirectiveLocation ::= IDENTIFIER
 
-LITERAL ::= BOOLEAN_LITERAL | NUMBER_LITERAL | STRING_LITERAL
+BOOLEAN_LITERAL ::= 'true' | 'false'
+Literal ::= NUMBER_LITERAL | STRING_LITERAL | BOOLEAN_LITERAL
+VariableReference ::= VARIABLE_IDENTIFIER
 
-FieldValueDecl ::= LITERAL | ObjectValueDecl
+SimpleFieldValueDecl ::= Literal | SimpleObjectValueDecl | SimpleArrayValuesDecl
 
-ObjectValueDecl ::= LEFT_CURLY ObjectValueFieldDef ObjectValueAddtlFieldDef* RIGHT_CURLY
-ObjectValueFieldDef ::= NameOfSomeField COLON FieldValueDecl
-ObjectValueAddtlFieldDef ::= COMMA ObjectValueFieldDef
+SimpleObjectValueDecl ::= LEFT_CURLY SimpleObjectValueFieldDecl SimpleObjectValueAddtlFieldDecl* RIGHT_CURLY
+SimpleObjectValueFieldDecl ::= NameOfSomeField COLON SimpleFieldValueDecl
+SimpleObjectValueAddtlFieldDecl ::= COMMA? SimpleObjectValueFieldDecl
 
-TypeDecl ::= ListTypeDecl | BasicTypeDecl
+SimpleArrayValuesDecl ::= LEFT_BRACKET SimpleArrayInnerValDecl SimpleArrayInnerValAddtlDecl* RIGHT_BRACKET
+SimpleArrayInnerValDecl ::= SimpleFieldValueDecl
+SimpleArrayInnerValAddtlDecl ::= COMMA? SimpleArrayInnerValDecl
+
+///------------
+CompositeFieldValueDecl ::= Literal | CompositeObjectValueDecl | CompositeArrayValuesDecl | VariableReference
+
+CompositeArrayValuesDecl ::= LEFT_BRACKET CompositeArrayInnerValDecl CompositeArrayInnerValAddtlDecl* RIGHT_BRACKET
+CompositeArrayInnerValDecl ::= CompositeFieldValueDecl
+CompositeArrayInnerValAddtlDecl ::= COMMA? CompositeArrayInnerValDecl
+
+CompositeObjectValueDecl ::= LEFT_CURLY CompositeObjectValueFieldDecl CompositeObjectValueFieldAddtlDecl* RIGHT_CURLY
+CompositeObjectValueFieldDecl ::= NameOfSomeField COLON CompositeFieldValueDecl
+CompositeObjectValueFieldAddtlDecl ::= COMMA? CompositeObjectValueFieldDecl
+
+TypeDecl ::= BasicTypeDecl | ListTypeDecl
 BasicTypeDecl ::= NameOfSomeType REQUIRED?
-ListTypeDecl ::= LEFT_BRACKET NameOfSomeType REQUIRED? RIGHT_BRACKET
+ListTypeDecl ::= LEFT_BRACKET BasicTypeDecl RIGHT_BRACKET REQUIRED?
 
 //Distinction to Note and remember
 //Argument definition is defining the arguments a field takes. I.E. foo(a: A, b: B): Bar
 //Argument declaration stating the named arguments being passed. I.E. foo(a: "Cool", b: "cooler") {...}
-ArgumentsDeclSet ::= LEFT_PAREN ArgumentDecl ArgumentAddtlDecl* RIGHT_PAREN
-ArgumentDecl ::= NameOfSomeField COLON FieldValueDecl
-ArgumentAddtlDecl ::= COMMA ArgumentDecl
+SchemaArgumentsDeclSet ::= LEFT_PAREN SchemaArgumentDecl SchemaArgumentAddtlDecl* RIGHT_PAREN
+SchemaArgumentDecl ::= NameOfSomeField COLON SimpleFieldValueDecl
+SchemaArgumentAddtlDecl ::= COMMA? SchemaArgumentDecl
+
+OperationArgumentDeclSet ::= LEFT_PAREN OperationArgumentDecl OperationArgumentAddtlDecl* RIGHT_PAREN
+OperationArgumentDecl ::= NameOfSomeField COLON CompositeFieldValueDecl
+OperationArgumentAddtlDecl ::= COMMA? OperationArgumentDecl
+
 
 ArgumentsDefSet ::= LEFT_PAREN ArgumentDef ArgumentAddtlDef* RIGHT_PAREN
-ArgumentDef ::= identifier COLON TypeDecl
+ArgumentDef ::= IDENTIFIER COLON TypeDecl
 ArgumentAddtlDef ::= COMMA ArgumentDef
 
-MemberFieldsSetDef ::= LEFT_CURLY MemberFieldDef+ RIGHT_CURLY
-MemberFieldDef ::= identifier ArgumentsDefSet? COLON TypeDecl DirectivesSetDecl?
+MemberFieldsSetDef ::= LEFT_CURLY MemberFieldDef MemberFieldAddtlDef* RIGHT_CURLY
+MemberFieldDef ::= IDENTIFIER ArgumentsDefSet? COLON TypeDecl SchemaDirectivesDeclSet?
+MemberFieldAddtlDef ::= COMMA? MemberFieldDef
 
 SimpleMemberFieldsSetDef ::= LEFT_CURLY SimpleMemberFieldDef+ RIGHT_CURLY
-SimpleMemberFieldDef ::= identifier COLON TypeDecl
+SimpleMemberFieldDef ::= IDENTIFIER COLON TypeDecl
 
-DirectivesSetDecl ::= DirectiveDecl*
-DirectiveDecl ::= DIRECTIVE_IDENTIFIER ArgumentsDeclSet?
+// Directive declaration is using directive such as on a field or object. I.E. field {a@foo}
+// Directive definition is defining some directive. i.e. directive @foo on Field
+SchemaDirectivesDeclSet ::= SchemaDirectiveDecl*
+SchemaDirectiveDecl ::= DIRECTIVE_IDENTIFIER SchemaArgumentsDeclSet?
 
-ObjectTypeDef ::= TYPE NamedTypeDef ObjectTypeImplInterfacesDef? DirectivesSetDecl? MemberFieldsSetDef
+OperationDirectivesDeclSet ::= OperationDirectiveDecl*
+OperationDirectiveDecl ::= DIRECTIVE_IDENTIFIER OperationArgumentDeclSet?
+
+DirectiveDef ::= DIRECTIVE DIRECTIVE_IDENTIFIER ArgumentsDefSet? DirectiveDefLocCondSet
+DirectiveDefLocCondSet ::= 'on' DirectiveLocation DirectiveDefLocAddtlCond*
+DirectiveDefLocAddtlCond ::= PIPE DirectiveLocation
+
+ObjectTypeDef ::= TYPE NamedTypeDef ObjectTypeImplInterfacesDef? SchemaDirectivesDeclSet? MemberFieldsSetDef
 ObjectTypeImplInterfacesDef ::= IMPLEMENTS NameOfSomeType ObjectTypeInterfaceAddtlMember*
 ObjectTypeInterfaceAddtlMember ::= COMMA NameOfSomeType
 
@@ -124,8 +167,8 @@ InterfaceTypeDef ::= INTERFACE NamedTypeDef MemberFieldsSetDef
 
 EnumTypeDef ::= ENUM NamedTypeDef EnumValuesSetDef
 EnumValuesSetDef ::= LEFT_CURLY EnumValueDef EnumAddtlValueDef* RIGHT_CURLY
-EnumValueDef ::= identifier
-EnumAddtlValueDef ::= COMMA? identifier
+EnumValueDef ::= IDENTIFIER
+EnumAddtlValueDef ::= COMMA? IDENTIFIER
 
 UnionTypeDef ::= UNION NamedTypeDef EQUALS UnionMemberDecl UnionAddtlMemberDecl*
 UnionMemberDecl ::= NameOfSomeType
@@ -137,21 +180,41 @@ RootSchemaTypeDef ::= SCHEMA SimpleMemberFieldsSetDef
 
 InputObjectTypeDef ::= INPUT NamedTypeDef SimpleMemberFieldsSetDef
 
+ExtendTypeDef ::= EXTEND TYPE NameOfSomeType MemberFieldsSetDef
 
-// graphql query specific definitions
-FragmentDef ::= NOT_YET_IMPL
+ExecutableDef ::=
 
-QueryDef ::= QueryOperationDecl? QueryFieldExpansion
-QueryOperationDecl ::= QUERY identifier DirectivesSetDecl?
-QueryFieldExpansion ::= LEFT_CURLY FieldExpansionStatements+ RIGHT_CURLY
+OperationDef
+|
+FragmentDef
 
-FieldExpansionStatements ::= QueryFieldsSelSet | InlineFragmentDecl
+OperationDef ::= MaybeFullOperationDef? LEFT_CURLY SelectionSetDecl RIGHT_CURLY
+MaybeFullOperationDef ::= OperationTypeDecl IDENTIFIER? OperationVariablesSetDef? OperationDirectivesDeclSet?
+OperationTypeDecl ::= QUERY | MUTATION | SUBSCRIPTION
 
-QueryFieldsSelSet::= QueryFieldSel QueryFieldAddtlSel*
+OperationVariablesSetDef ::= LEFT_PAREN OperationVariableDef OperationAddtlVariableDef* RIGHT_PAREN
+OperationVariableDef ::= VARIABLE_IDENTIFIER COLON TypeDecl OperationVariableDefaultVal?
+OperationVariableDefaultVal ::= EQUALS SimpleFieldValueDecl
+OperationAddtlVariableDef ::= COMMA? OperationVariableDef
 
-QueryFieldSel ::= QueryFieldAlias? NameOfSomeField DirectivesSetDecl? QueryFieldExpansion?
-QueryFieldAlias ::= identifier COLON
-QueryFieldAddtlSel ::= COMMA? QueryFieldSel
+SelectionSetDecl ::= Selection AddtlSelection*
+Selection ::=
+FieldSelection
+|
+FragmentSpread
+|
+InlineFragment
 
-InlineFragmentDecl ::= '...' FragmentTypeCondition DirectivesSetDecl? QueryFieldExpansion
-FragmentTypeCondition ::= 'on' NameOfSomeType
+AddtlSelection ::= COMMA? Selection
+
+FieldSelection ::= FieldAlias? NameOfSomeField OperationArgumentDeclSet? OperationDirectivesDeclSet? FieldExpansionDecl?
+FieldAlias ::= IDENTIFIER COLON
+FieldExpansionDecl ::= LEFT_CURLY SelectionSetDecl RIGHT_CURLY
+
+FragmentSpread ::= FRAGMENT_DOTS IDENTIFIER OperationDirectivesDeclSet?
+
+InlineFragment ::= FRAGMENT_DOTS FragmentTypeCondition OperationDirectivesDeclSet? FieldExpansionDecl
+
+FragmentTypeCondition ::= FRAGMENT_ON NameOfSomeType
+
+FragmentDef ::= FRAGMENT IDENTIFIER FragmentTypeCondition OperationDirectivesDeclSet? LEFT_CURLY SelectionSetDecl RIGHT_CURLY

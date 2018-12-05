@@ -24,7 +24,9 @@ dependencies {
 
 intellij {
     version '2018.3' //https://www.jetbrains.com/intellij-repository/releases
+    plugins = ['org.jetbrains.idea.grammar:2017.1.6', 'PsiViewer:183.2153']
 }
+
 patchPluginXml {
     changeNotes """
       This is the initial release.<br>

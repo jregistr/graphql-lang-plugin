@@ -18,7 +18,7 @@ class GraphQlLangParserDefinition extends ParserDefinition {
 
   override def getWhitespaceTokens: TokenSet = WhitespaceTokenSet
 
-  override def createLexer(project: Project): Lexer = new GraphQlLangLexerAdapter
+  override def createLexer(project: Project): Lexer = new GraphQlLangLexerAdapter()
 
   override def createParser(project: Project): PsiParser = new GraphQlParser
 

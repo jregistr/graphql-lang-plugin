@@ -17,7 +17,8 @@
     <extensions defaultExtensionNs="com.intellij">
         <!-- Add your extensions here -->
         <fileTypeFactory implementation="com.jregistr.graphqllang.langdef.GraphQlLangFileTypeFactory" />
-    </extensions>
+        <lang.parserDefinition language="GraphQL" implementationClass="com.jregistr.graphqllang.parser.GraphQlLangParserDefinition" />
+    com.jregistr.graphqllang.parser</extensions>
 
     <actions>
         <!-- Add your actions here -->
