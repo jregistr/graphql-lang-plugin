@@ -98,8 +98,9 @@ DirectiveLocation ::= IDENTIFIER
 BOOLEAN_LITERAL ::= 'true' | 'false'
 Literal ::= NUMBER_LITERAL | STRING_LITERAL | BOOLEAN_LITERAL
 VariableReference ::= VARIABLE_IDENTIFIER
+StaticValue ::= IDENTIFIER
 
-SimpleFieldValueDecl ::= Literal | SimpleObjectValueDecl | SimpleArrayValuesDecl
+SimpleFieldValueDecl ::= Literal | SimpleObjectValueDecl | SimpleArrayValuesDecl | StaticValue
 
 SimpleObjectValueDecl ::= LEFT_CURLY SimpleObjectValueFieldDecl SimpleObjectValueAddtlFieldDecl* RIGHT_CURLY
 SimpleObjectValueFieldDecl ::= NameOfSomeField COLON SimpleFieldValueDecl
@@ -110,7 +111,7 @@ SimpleArrayInnerValDecl ::= SimpleFieldValueDecl
 SimpleArrayInnerValAddtlDecl ::= COMMA? SimpleArrayInnerValDecl
 
 ///------------
-CompositeFieldValueDecl ::= Literal | CompositeObjectValueDecl | CompositeArrayValuesDecl | VariableReference
+CompositeFieldValueDecl ::= Literal | CompositeObjectValueDecl | CompositeArrayValuesDecl | VariableReference | StaticValue
 
 CompositeArrayValuesDecl ::= LEFT_BRACKET CompositeArrayInnerValDecl CompositeArrayInnerValAddtlDecl* RIGHT_BRACKET
 CompositeArrayInnerValDecl ::= CompositeFieldValueDecl
