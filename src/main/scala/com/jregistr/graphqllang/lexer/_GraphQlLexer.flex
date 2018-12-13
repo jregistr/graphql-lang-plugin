@@ -25,7 +25,7 @@ import static com.jregistr.graphqllang.psi.GraphQlTokenTypes.*;
 EOL=\R
 WHITE_SPACE=\s+
 
-DIRECTIVE_IDENTIFIER=@([_A-Za-z][_0-9A-Za-z]*)
+DIRECTIVE_IDENTIFIER=@(_?[A-Za-z][_0-9A-Za-z]*)
 VARIABLE_IDENTIFIER=\$([_A-Za-z][_0-9A-Za-z]*)
 IDENTIFIER=[_A-Za-z][_0-9A-Za-z]*
 STRING_LITERAL=\".*\"
@@ -37,6 +37,7 @@ SINGLE_LINE_COMMENT=#.*
 <YYINITIAL> {
   {WHITE_SPACE}               { return WHITE_SPACE; }
 
+  "NOT_YET_IMPL"              { return NOT_IMPL; }
   "type"                      { return TYPE; }
   "input"                     { return INPUT; }
   "enum"                      { return ENUM; }
@@ -62,8 +63,20 @@ SINGLE_LINE_COMMENT=#.*
   "="                         { return EQUALS; }
   "|"                         { return PIPE; }
   "!"                         { return REQUIRED; }
+  "&"                         { return AMPERSAND; }
   "..."                       { return FRAGMENT_DOTS; }
-  "on"                        { return FRAGMENT_ON; }
+  "on"                        { return ON; }
+  "UnionTypeDef"              { return UNIONTYPEDEF; }
+  "ScalarTypeDef"             { return SCALARTYPEDEF; }
+  "InputObjectTypeDef"        { return INPUTOBJECTTYPEDEF; }
+  "ExtendObjectTypeDef"       { return EXTENDOBJECTTYPEDEF; }
+  "ExtendScalarDef"           { return EXTENDSCALARDEF; }
+  "ExtendInterfaceDef"        { return EXTENDINTERFACEDEF; }
+  "ExtendUnionDef"            { return EXTENDUNIONDEF; }
+  "ExtendEnumDef"             { return EXTENDENUMDEF; }
+  "ExtendInputObjectDef"      { return EXTENDINPUTOBJECTDEF; }
+  "OperationDef"              { return OPERATIONDEF; }
+  "FragmentDef"               { return FRAGMENTDEF; }
 
   {DIRECTIVE_IDENTIFIER}      { return DIRECTIVE_IDENTIFIER; }
   {VARIABLE_IDENTIFIER}       { return VARIABLE_IDENTIFIER; }

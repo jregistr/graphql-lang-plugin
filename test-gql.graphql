@@ -1,136 +1,57 @@
-interface Thing {
-    name: String
+type Foo {
+   a: B
 }
 
-interface Vehicle {
-    color: Color
+type Bla @foo(a: 11) @bar @foo(a: "dd") {
+ a(a: B = 111, v: T y: VV): B @foo
+ d(a: B = 111, v: T y: VV): B @baz(a: 111) @foo @bar(a: "111")
+ b(a: B = 111 v: T y: VV): B
+ c(a: CC = 111 @foo @baz y: ZZ @foo @bar(a: "111") @bb c: DD): B
 }
 
-type Car implements Vehicle, Thing @foo @bar(aaa: "dddd") {
-    gas: Int
+type Foo {
+ a: B @bar @baz(a: 11)
 }
 
-enum Booleans {
-    TRUE
-    FALSE
+interface Animal {
+  a(a: B = 111, v: T y: VV): B @foo
+  d(a: B = 111, v: T y: VV): B @baz(a: 111) @foo @bar(a: "111")
+  b(a: B = 111 v: T y: VV): B
+  c(a: CC = 111 @foo @baz y: ZZ @foo @bar(a: "111") @bb c: DD): B
 }
 
-enum ExampleTwo {
-    FIRST,
-    SECOND
+interface Pet {
+  favFood: Food
 }
 
-type Rocket implements Vehicle {
-    bla: Bla @bar(aaa: 777)
-    blast(radius: Int): Boolean
-    explode(area: Int, double: Boolean): Boolean @bar(aaa: "vvv")
+type Deer implements Animal & Pet {
+  a: B
 }
 
-type Rocket implements Vehicle {
-    blast(radius: Int): Boolean
-    explode(area: Int, double: Boolean): Boolean @bar(aaa: 11111111.01)
+enum Direction @foo @bar(a: 11) {
+ NORTH @print(value: "north"),
+ SOUTH @print(value: "south")
+ EAST
+ WEST @print (value: "west") @expensive
 }
 
-{
-  employee(id: "") {
-    firstName
-  }
-}
+type Foo
 
+interface Bar
 
-query foo {
-  allCompanies {
-    name
-  }
-}
+enum Baz
 
-query bla @fooobar {
-  cool(iden: {tok: "BOOM"}) {
-    soofoo @bazbar {
-      ccc
-    }
-  }
-}
+union Foobar
 
-{
-  employee(id: "") {
-    ... on Employee {
-      firstName
-    }
-  }
-}
+directive @example on FIELD_DEFINITION | ARGUMENT_DEFINITION
 
+directive @example on FIELD_DEFINITION ARGUMENT_DEFINITION FOO
 
-{
-  employee(id: "") {
-    ... onEmploy
-  }
-}
+scalar DateTime
 
-fragment onEmploy on Employee {
-  firstName
-}
+scalar Time @foo @baz(a: "111") @bar(a: 11 c: "dd")
 
-query DD {
-  employee {
-    ... on Employee {
-      bla:firstName @skip(if: true)
-      subordinates {
-        firstName
-        ... on YY {
-         g
-        }
-      }
-    }
-  }
-}
-
-query bla {
-  employee(a: {a: "gg"}) {
-    firstName
-  }
-}
-
-query bla @fooobar {
-  cool(iden: {tok: "BOOM"}) {
-    soofoo @bazbar {
-      ccc
-    }
-    ... on Bla {
-     g
-    }
-  }
-}
-
-{
- ... on Query {
-  a
- }
-}
-
-query name {
-	dss:employee(a: 11, tt: {d: 77}) @foo @bar(a: "11", b: true) {
-    address
-    foo: address @foo @baz(hh: false)
-    subordinates {
-      lastName
-      ... superb @baz @tttt(a: 777)
-      ... on Bla @baz {
-        g: y
-        ... on Foo {
-         t {
-          y: tt
-         }
-        }
-      }
-    }
-  }
-}
-
-fragment bla on Foo @foo {
- ... on Foo {
-  a
- }
- t: ff
- ...onCool
+input Point2D {
+  x: Float
+  y: Float
 }

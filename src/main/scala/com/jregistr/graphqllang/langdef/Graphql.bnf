@@ -12,6 +12,7 @@
     tokenTypeClass="com.jregistr.graphqllang.langdef.GraphQlLangTokenType"
 
     tokens = [
+        NOT_IMPL='NOT_YET_IMPL'
         TYPE='type'
         INPUT='input'
         ENUM='enum'
@@ -42,10 +43,12 @@
         EQUALS='='
         PIPE='|'
         REQUIRED='!'
-        DIRECTIVE_IDENTIFIER='regexp:@([_A-Za-z][_0-9A-Za-z]*)'
+        AMPERSAND='&'
+
+        DIRECTIVE_IDENTIFIER='regexp:@(_?[A-Za-z][_0-9A-Za-z]*)'
         VARIABLE_IDENTIFIER='regexp:\$([_A-Za-z][_0-9A-Za-z]*)'
         FRAGMENT_DOTS='...'
-        FRAGMENT_ON='on'
+        ON='on'
 
         IDENTIFIER="regexp:[_A-Za-z][_0-9A-Za-z]*"
         STRING_LITERAL='regexp:".*"'
@@ -67,29 +70,153 @@
 GraphQlDocument ::= Definition*
 
 Definition ::=
+TypeSystemDef
+|
+TypeSystemExtensionDef
+|
+ExecutableDef
 
+/* Begin common definition */
+
+TypeName ::= IDENTIFIER
+FieldName ::= IDENTIFIER
+EnumValue ::= IDENTIFIER
+
+Literal ::= NUMBER_LITERAL | STRING_LITERAL | BOOLEAN_LITERAL
+BOOLEAN_LITERAL ::= 'true' | 'false'
+VariableReference ::= VARIABLE_IDENTIFIER
+
+FieldValueDecl ::= Literal | ObjectValueDecl | ArrayValueDecl | EnumValue
+
+ObjectValueDecl ::= LEFT_CURLY ObjectValueFieldDecl ObjectValueAddtlFieldDecl* RIGHT_CURLY
+ObjectValueFieldDecl ::= FieldName COLON FieldValueDecl
+ObjectValueAddtlFieldDecl ::= COMMA? ObjectValueFieldDecl
+
+ArrayValueDecl ::= LEFT_BRACKET ArrayMemberDecl ArrayMemberAddtlDecl* RIGHT_BRACKET
+ArrayMemberDecl ::= FieldValueDecl
+ArrayMemberAddtlDecl ::= COMMA? ArrayMemberDecl
+
+/* End common definition */
+
+
+/* Begin Schema Definition Language */
+TypeSystemDef ::=
+RootSchemaTypeDef
+|
 ObjectTypeDef
 |
 InterfaceTypeDef
 |
 EnumTypeDef
 |
+DirectiveTypeDef
+|
 UnionTypeDef
 |
 ScalarTypeDef
 |
-RootSchemaTypeDef
-|
 InputObjectTypeDef
+
+
+TypeSystemExtensionDef ::=
+ExtendObjectTypeDef
 |
-DirectiveDef
+ExtendScalarDef
 |
-ExtendTypeDef
+ExtendInterfaceDef
 |
-ExecutableDef
+ExtendUnionDef
+|
+ExtendEnumDef
+|
+ExtendInputObjectDef
+
+NamedTypeDef ::= IDENTIFIER
+
+CompositeFieldTypeDecl ::= COLON FieldTypeDecl
+FieldTypeDecl ::= BasicTypeDecl | ListTypeDecl
+BasicTypeDecl ::= TypeName REQUIRED?
+ListTypeDecl ::= LEFT_BRACKET FieldTypeDecl RIGHT_BRACKET REQUIRED?
+
+//Field input such as type Foo {bar(a: BB, c:DD): Baz}
+InputsSetDef ::= LEFT_PAREN InputDef AddtlInputDef* RIGHT_PAREN
+InputDef ::= FieldName CompositeFieldTypeDecl InputDefaultValueDef? SchemaDirectivesSetDecl?
+AddtlInputDef ::= COMMA? InputDef
+InputDefaultValueDef ::= EQUALS FieldValueDecl
+
+SchemaArgumentsSetDecl ::= LEFT_PAREN SchemaArgumentDecl AddtlSchemaArgumentDecl* RIGHT_PAREN
+SchemaArgumentDecl ::= FieldName COLON FieldValueDecl
+AddtlSchemaArgumentDecl ::= COMMA? SchemaArgumentDecl
+
+SchemaDirectivesSetDecl ::= SchemaDirectiveDecl+
+SchemaDirectiveDecl ::= DIRECTIVE_IDENTIFIER SchemaArgumentsSetDecl?
+
+FieldsDefSet ::= LEFT_CURLY FieldDef AddtlFieldDef* RIGHT_CURLY
+FieldDef ::= FieldName InputsSetDef? CompositeFieldTypeDecl SchemaDirectivesSetDecl?
+AddtlFieldDef ::= COMMA? FieldDef
+
+//I.E. schema {query: Query}
+RootSchemaTypeDef ::= SCHEMA SchemaDirectivesSetDecl? RootSchemaOperationsSetDef
+RootSchemaOperationsSetDef ::= LEFT_CURLY RootSchemaOperationTypeDef RootSchemaAddtlOperationTypeDef* RIGHT_CURLY
+RootSchemaOperationTypeDef ::= FieldName COLON TypeName
+RootSchemaAddtlOperationTypeDef ::= COMMA? RootSchemaOperationTypeDef
+
+// I.E. type Dog implements Animal & Pet { bark(loudness: String = "Over 9000!" @foo @bar(a: 11)): Bark }
+ObjectTypeDef ::= TYPE NamedTypeDef ImplInterfacesDeclSet? SchemaDirectivesSetDecl? FieldsDefSet?
+ImplInterfacesDeclSet ::= IMPLEMENTS TypeName AddtlInterfacesSet?
+AddtlInterfacesSet ::= AdditionalInterface+
+AdditionalInterface ::= AMPERSAND TypeName
+
+// I.E. interface Animal @foo {walk(distance: Int): Float}
+InterfaceTypeDef ::= INTERFACE NamedTypeDef SchemaDirectivesSetDecl? FieldsDefSet?
+
+// I.E. enum Direction { NORTH, SOUTH, EAST @value("west"), WEST @value("west") }
+EnumTypeDef ::= ENUM NamedTypeDef SchemaDirectivesSetDecl? EnumValuesDefSet?
+EnumValuesDefSet ::= LEFT_CURLY EnumValueDef EnumAddtlValueDef* RIGHT_CURLY
+EnumValueDef ::= EnumValue SchemaDirectivesSetDecl?
+EnumAddtlValueDef ::= COMMA? EnumValueDef
+
+DirectiveTypeDef ::= DIRECTIVE DIRECTIVE_IDENTIFIER InputsSetDef? DirectiveLocationsConditionDef
+DirectiveLocationsConditionDef ::= ON DirectiveLocation DirectiveAddtlLocation*
+DirectiveLocation ::= IDENTIFIER
+DirectiveAddtlLocation ::= PIPE? DirectiveLocation
+
+// I.E. union SupersonicVehicles = Jets | Rockets
+UnionTypeDef ::= UNION NamedTypeDef SchemaDirectivesSetDecl? UnionMembersSetDef?
+UnionMembersSetDef ::= EQUALS UnionMemberDef UnionAddtlMemberDef*
+UnionMemberDef ::= TypeName
+UnionAddtlMemberDef ::= PIPE? UnionMemberDef
+
+// I.E. scalar DateTime @foo
+ScalarTypeDef ::= SCALAR NamedTypeDef SchemaDirectivesSetDecl?
+
+// I.E. input Point2D { x: Float @foo, y: Float }
+InputObjectTypeDef ::= NOT_IMPL
+/* End Schema Definition Language*/
+
+
+/* Begin Executable definitions*/
+ExecutableDef ::=
+OperationDef
+|
+FragmentDef
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
 NamedTypeDef ::= IDENTIFIER
 NameOfSomeType ::= IDENTIFIER
 NameOfSomeField ::= IDENTIFIER
@@ -138,15 +265,19 @@ OperationArgumentAddtlDecl ::= COMMA? OperationArgumentDecl
 
 
 ArgumentsDefSet ::= LEFT_PAREN ArgumentDef ArgumentAddtlDef* RIGHT_PAREN
-ArgumentDef ::= IDENTIFIER COLON TypeDecl
+ArgumentDef ::= NamedTypeDef COLON TypeDecl DefaultValueDef? SchemaDirectivesDeclSet?
+DefaultValueDef ::= EQUALS SimpleFieldValueDecl
 ArgumentAddtlDef ::= COMMA ArgumentDef
 
+FieldDefName ::= IDENTIFIER
+
 MemberFieldsSetDef ::= LEFT_CURLY MemberFieldDef MemberFieldAddtlDef* RIGHT_CURLY
-MemberFieldDef ::= IDENTIFIER ArgumentsDefSet? COLON TypeDecl SchemaDirectivesDeclSet?
+MemberFieldDef ::= FieldDefName ArgumentsDefSet? COLON TypeDecl SchemaDirectivesDeclSet?
 MemberFieldAddtlDef ::= COMMA? MemberFieldDef
 
-SimpleMemberFieldsSetDef ::= LEFT_CURLY SimpleMemberFieldDef+ RIGHT_CURLY
-SimpleMemberFieldDef ::= IDENTIFIER COLON TypeDecl
+SimpleMemberFieldsSetDef ::= LEFT_CURLY SimpleMemberFieldDef SimpleAddtlMemberFieldDef* RIGHT_CURLY
+SimpleMemberFieldDef ::= FieldDefName COLON TypeDecl
+SimpleAddtlMemberFieldDef ::= COMMA? SimpleMemberFieldDef
 
 // Directive declaration is using directive such as on a field or object. I.E. field {a@foo}
 // Directive definition is defining some directive. i.e. directive @foo on Field
@@ -156,9 +287,33 @@ SchemaDirectiveDecl ::= DIRECTIVE_IDENTIFIER SchemaArgumentsDeclSet?
 OperationDirectivesDeclSet ::= OperationDirectiveDecl*
 OperationDirectiveDecl ::= DIRECTIVE_IDENTIFIER OperationArgumentDeclSet?
 
-DirectiveDef ::= DIRECTIVE DIRECTIVE_IDENTIFIER ArgumentsDefSet? DirectiveDefLocCondSet
-DirectiveDefLocCondSet ::= 'on' DirectiveLocation DirectiveDefLocAddtlCond*
-DirectiveDefLocAddtlCond ::= PIPE DirectiveLocation
+
+
+TypeDef ::=
+RootSchemaTypeDef
+|
+ObjectTypeDef
+|
+InterfaceTypeDef
+|
+EnumTypeDef
+|
+DirectiveDef
+|
+UnionTypeDef
+|
+ScalarTypeDef
+|
+ExtendScalarDef
+|
+InputObjectTypeDef
+|
+ExtendTypeDef
+
+RootSchemaTypeDef ::= SCHEMA SchemaDirectivesDeclSet? RootSchemaOperationTypesDefSet
+RootSchemaOperationTypesDefSet ::= LEFT_CURLY RootSchemaOperationTypeDef RootSchemaAddtlOperationTypeDef* RIGHT_CURLY
+RootSchemaOperationTypeDef ::= IDENTIFIER COLON NameOfSomeType
+RootSchemaAddtlOperationTypeDef ::= COMMA? RootSchemaOperationTypeDef
 
 ObjectTypeDef ::= TYPE NamedTypeDef ObjectTypeImplInterfacesDef? SchemaDirectivesDeclSet? MemberFieldsSetDef
 ObjectTypeImplInterfacesDef ::= IMPLEMENTS NameOfSomeType ObjectTypeInterfaceAddtlMember*
@@ -171,20 +326,24 @@ EnumValuesSetDef ::= LEFT_CURLY EnumValueDef EnumAddtlValueDef* RIGHT_CURLY
 EnumValueDef ::= IDENTIFIER
 EnumAddtlValueDef ::= COMMA? IDENTIFIER
 
+DirectiveDef ::= DIRECTIVE DIRECTIVE_IDENTIFIER ArgumentsDefSet? DirectiveDefLocCondSet
+DirectiveDefLocCondSet ::= 'on' DirectiveLocation DirectiveDefLocAddtlCond*
+DirectiveDefLocAddtlCond ::= PIPE DirectiveLocation
+
 UnionTypeDef ::= UNION NamedTypeDef EQUALS UnionMemberDecl UnionAddtlMemberDecl*
 UnionMemberDecl ::= NameOfSomeType
 UnionAddtlMemberDecl ::= PIPE UnionMemberDecl
 
-ScalarTypeDef ::= SCALAR NamedTypeDef
+ScalarTypeDef ::= SCALAR NamedTypeDef SchemaDirectivesDeclSet?
 
-RootSchemaTypeDef ::= SCHEMA SimpleMemberFieldsSetDef
+ExtendScalarDef ::= EXTEND SCALAR NamedTypeDef SchemaDirectivesDeclSet?
 
 InputObjectTypeDef ::= INPUT NamedTypeDef SimpleMemberFieldsSetDef
 
 ExtendTypeDef ::= EXTEND TYPE NameOfSomeType MemberFieldsSetDef
 
-ExecutableDef ::=
 
+ExecutableDef ::=
 OperationDef
 |
 FragmentDef
@@ -194,11 +353,11 @@ MaybeFullOperationDef ::= OperationTypeDecl IDENTIFIER? OperationVariablesSetDef
 OperationTypeDecl ::= QUERY | MUTATION | SUBSCRIPTION
 
 OperationVariablesSetDef ::= LEFT_PAREN OperationVariableDef OperationAddtlVariableDef* RIGHT_PAREN
-OperationVariableDef ::= VARIABLE_IDENTIFIER COLON TypeDecl OperationVariableDefaultVal?
-OperationVariableDefaultVal ::= EQUALS SimpleFieldValueDecl
+OperationVariableDef ::= VARIABLE_IDENTIFIER COLON TypeDecl DefaultValueDef?
 OperationAddtlVariableDef ::= COMMA? OperationVariableDef
 
 SelectionSetDecl ::= Selection AddtlSelection*
+
 Selection ::=
 FieldSelection
 |
@@ -219,3 +378,15 @@ InlineFragment ::= FRAGMENT_DOTS FragmentTypeCondition OperationDirectivesDeclSe
 FragmentTypeCondition ::= FRAGMENT_ON NameOfSomeType
 
 FragmentDef ::= FRAGMENT IDENTIFIER FragmentTypeCondition OperationDirectivesDeclSet? LEFT_CURLY SelectionSetDecl RIGHT_CURLY
+ */
+
+
+/*
+MaybeAddtlInterfaces?
+
+MaybeAddtlInterfaces ::= AddtlInterfacesSetDecl | LegacyAddtlInterfacesSetDecl
+AddtlInterfacesSetDecl ::= AddtlInterfaceDecl+
+AddtlInterfaceDecl ::= AMPERSAND TypeName
+LegacyAddtlInterfacesSetDecl ::= AddtlLegacyInterfaceDecl+
+AddtlLegacyInterfaceDecl ::= COMMA TypeName
+*/
