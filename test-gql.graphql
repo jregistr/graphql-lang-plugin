@@ -55,3 +55,10 @@ input Point2D {
   x: Float
   y: Float
 }
+
+input Point2D {
+ x: Float = 10,
+ y: Float = "dd" @foo @baz(a: 10)
+}
+
+input Empty

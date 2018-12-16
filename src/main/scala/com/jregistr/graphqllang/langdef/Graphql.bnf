@@ -72,7 +72,7 @@ GraphQlDocument ::= Definition*
 Definition ::=
 TypeSystemDef
 |
-TypeSystemExtensionDef
+TypeSystemExtension
 |
 ExecutableDef
 
@@ -84,10 +84,12 @@ EnumValue ::= IDENTIFIER
 
 Literal ::= NUMBER_LITERAL | STRING_LITERAL | BOOLEAN_LITERAL
 BOOLEAN_LITERAL ::= 'true' | 'false'
-VariableReference ::= VARIABLE_IDENTIFIER
 
+// I.E. 10 or "foobar" or [1 2 3 4] or {a: 10 b: false}.
+// Note:!!, CANNOT refer to variables via $foo
 FieldValueDecl ::= Literal | ObjectValueDecl | ArrayValueDecl | EnumValue
 
+// I.E. { a: "foobar" b: true }
 ObjectValueDecl ::= LEFT_CURLY ObjectValueFieldDecl ObjectValueAddtlFieldDecl* RIGHT_CURLY
 ObjectValueFieldDecl ::= FieldName COLON FieldValueDecl
 ObjectValueAddtlFieldDecl ::= COMMA? ObjectValueFieldDecl
@@ -103,13 +105,17 @@ ArrayMemberAddtlDecl ::= COMMA? ArrayMemberDecl
 TypeSystemDef ::=
 RootSchemaTypeDef
 |
+TypeDefinition
+|
+DirectiveTypeDef
+
+
+TypeDefinition ::=
 ObjectTypeDef
 |
 InterfaceTypeDef
 |
 EnumTypeDef
-|
-DirectiveTypeDef
 |
 UnionTypeDef
 |
@@ -118,44 +124,58 @@ ScalarTypeDef
 InputObjectTypeDef
 
 
-TypeSystemExtensionDef ::=
-ExtendObjectTypeDef
+TypeSystemExtension ::=
+RootSchemaExtension
 |
-ExtendScalarDef
+TypeExtension
+
+TypeExtension ::=
+ExtendObjectType
 |
-ExtendInterfaceDef
+ExtendScalar
 |
-ExtendUnionDef
+ExtendInterface
 |
-ExtendEnumDef
+ExtendUnion
 |
-ExtendInputObjectDef
+ExtendEnum
+|
+ExtendInputObject
 
 NamedTypeDef ::= IDENTIFIER
 
+// I.E. : Float or : Foobar
 CompositeFieldTypeDecl ::= COLON FieldTypeDecl
+
+// I.E. Float! or [[Float!]!]!
 FieldTypeDecl ::= BasicTypeDecl | ListTypeDecl
 BasicTypeDecl ::= TypeName REQUIRED?
 ListTypeDecl ::= LEFT_BRACKET FieldTypeDecl RIGHT_BRACKET REQUIRED?
 
-//Field input such as type Foo {bar(a: BB, c:DD): Baz}
-InputsSetDef ::= LEFT_PAREN InputDef AddtlInputDef* RIGHT_PAREN
+// I.E. (a: BB = 10, c:DD)
+InputsDef ::= LEFT_PAREN InputValueSetDef RIGHT_PAREN
+
+// I.E. foo: Bar = false baz: Foobar
+InputValueSetDef ::= InputDef AddtlInputDef*
 InputDef ::= FieldName CompositeFieldTypeDecl InputDefaultValueDef? SchemaDirectivesSetDecl?
 AddtlInputDef ::= COMMA? InputDef
 InputDefaultValueDef ::= EQUALS FieldValueDecl
 
+// I.E. (a: 10 b: false c: "true")
 SchemaArgumentsSetDecl ::= LEFT_PAREN SchemaArgumentDecl AddtlSchemaArgumentDecl* RIGHT_PAREN
 SchemaArgumentDecl ::= FieldName COLON FieldValueDecl
 AddtlSchemaArgumentDecl ::= COMMA? SchemaArgumentDecl
 
+// I.E. @foo @bar(a: 10) @baz
 SchemaDirectivesSetDecl ::= SchemaDirectiveDecl+
 SchemaDirectiveDecl ::= DIRECTIVE_IDENTIFIER SchemaArgumentsSetDecl?
 
+// I.E. {a: Int b: Float}
 FieldsDefSet ::= LEFT_CURLY FieldDef AddtlFieldDef* RIGHT_CURLY
-FieldDef ::= FieldName InputsSetDef? CompositeFieldTypeDecl SchemaDirectivesSetDecl?
+FieldDef ::= FieldName InputsDef? CompositeFieldTypeDecl SchemaDirectivesSetDecl?
 AddtlFieldDef ::= COMMA? FieldDef
 
-//I.E. schema {query: Query}
+// I.E. schema {query: Query}
 RootSchemaTypeDef ::= SCHEMA SchemaDirectivesSetDecl? RootSchemaOperationsSetDef
 RootSchemaOperationsSetDef ::= LEFT_CURLY RootSchemaOperationTypeDef RootSchemaAddtlOperationTypeDef* RIGHT_CURLY
 RootSchemaOperationTypeDef ::= FieldName COLON TypeName
@@ -176,11 +196,6 @@ EnumValuesDefSet ::= LEFT_CURLY EnumValueDef EnumAddtlValueDef* RIGHT_CURLY
 EnumValueDef ::= EnumValue SchemaDirectivesSetDecl?
 EnumAddtlValueDef ::= COMMA? EnumValueDef
 
-DirectiveTypeDef ::= DIRECTIVE DIRECTIVE_IDENTIFIER InputsSetDef? DirectiveLocationsConditionDef
-DirectiveLocationsConditionDef ::= ON DirectiveLocation DirectiveAddtlLocation*
-DirectiveLocation ::= IDENTIFIER
-DirectiveAddtlLocation ::= PIPE? DirectiveLocation
-
 // I.E. union SupersonicVehicles = Jets | Rockets
 UnionTypeDef ::= UNION NamedTypeDef SchemaDirectivesSetDecl? UnionMembersSetDef?
 UnionMembersSetDef ::= EQUALS UnionMemberDef UnionAddtlMemberDef*
@@ -191,9 +206,21 @@ UnionAddtlMemberDef ::= PIPE? UnionMemberDef
 ScalarTypeDef ::= SCALAR NamedTypeDef SchemaDirectivesSetDecl?
 
 // I.E. input Point2D { x: Float @foo, y: Float }
-InputObjectTypeDef ::= NOT_IMPL
+InputObjectTypeDef ::= INPUT NamedTypeDef SchemaDirectivesSetDecl? InputObjectFieldsSetDef?
+InputObjectFieldsSetDef ::= LEFT_CURLY InputValueSetDef RIGHT_CURLY
+
+// I.E. directive @example on FIELD_DEFINITION | ARGUMENT_DEFINITION
+DirectiveTypeDef ::= DIRECTIVE DIRECTIVE_IDENTIFIER InputsDef? DirectiveLocationsConditionDef
+DirectiveLocationsConditionDef ::= ON DirectiveLocation DirectiveAddtlLocation*
+DirectiveLocation ::= IDENTIFIER
+DirectiveAddtlLocation ::= PIPE? DirectiveLocation
+
+//  -------- Schema extensions --------
+
+
 /* End Schema Definition Language*/
 
+//----------------------------------------------------------------------------------------------------------------------
 
 /* Begin Executable definitions*/
 ExecutableDef ::=
@@ -201,7 +228,7 @@ OperationDef
 |
 FragmentDef
 
-
+VariableReference ::= VARIABLE_IDENTIFIER
 
 
 
