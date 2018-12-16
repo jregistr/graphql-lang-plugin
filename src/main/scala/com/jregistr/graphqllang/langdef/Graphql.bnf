@@ -70,13 +70,17 @@
 GraphQlDocument ::= Definition*
 
 Definition ::=
-TypeSystemDef
-|
-TypeSystemExtension
+SDLDefinition
 |
 ExecutableDef
 
-/* Begin common definition */
+SDLDefinition ::=
+TypeSystemDef
+|
+TypeSystemExtension
+
+//<><><><><><><><><><><><><><><><><><><>[Common/Misc]<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
 
 TypeName ::= IDENTIFIER
 FieldName ::= IDENTIFIER
@@ -98,10 +102,10 @@ ArrayValueDecl ::= LEFT_BRACKET ArrayMemberDecl ArrayMemberAddtlDecl* RIGHT_BRAC
 ArrayMemberDecl ::= FieldValueDecl
 ArrayMemberAddtlDecl ::= COMMA? ArrayMemberDecl
 
-/* End common definition */
 
+//<><><><><><><><><><><><><><><><><><><>[Schema Definition Language]<><><><><><><><><><><><><><><><><><><><><><><><><><>
+//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
 
-/* Begin Schema Definition Language */
 TypeSystemDef ::=
 RootSchemaTypeDef
 |
@@ -111,28 +115,28 @@ DirectiveTypeDef
 
 
 TypeDefinition ::=
+ScalarTypeDef
+|
 ObjectTypeDef
 |
 InterfaceTypeDef
 |
-EnumTypeDef
-|
 UnionTypeDef
 |
-ScalarTypeDef
+EnumTypeDef
 |
 InputObjectTypeDef
 
 
 TypeSystemExtension ::=
-RootSchemaExtension
+ExtendRootSchema
 |
 TypeExtension
 
 TypeExtension ::=
-ExtendObjectType
-|
 ExtendScalar
+|
+ExtendObjectType
 |
 ExtendInterface
 |
@@ -175,17 +179,21 @@ FieldsDefSet ::= LEFT_CURLY FieldDef AddtlFieldDef* RIGHT_CURLY
 FieldDef ::= FieldName InputsDef? CompositeFieldTypeDecl SchemaDirectivesSetDecl?
 AddtlFieldDef ::= COMMA? FieldDef
 
+
 // I.E. schema {query: Query}
 RootSchemaTypeDef ::= SCHEMA SchemaDirectivesSetDecl? RootSchemaOperationsSetDef
 RootSchemaOperationsSetDef ::= LEFT_CURLY RootSchemaOperationTypeDef RootSchemaAddtlOperationTypeDef* RIGHT_CURLY
 RootSchemaOperationTypeDef ::= FieldName COLON TypeName
 RootSchemaAddtlOperationTypeDef ::= COMMA? RootSchemaOperationTypeDef
 
+// ---------- TypeDefinition -------------------------------------------------------------------------------------------
+
 // I.E. type Dog implements Animal & Pet { bark(loudness: String = "Over 9000!" @foo @bar(a: 11)): Bark }
 ObjectTypeDef ::= TYPE NamedTypeDef ImplInterfacesDeclSet? SchemaDirectivesSetDecl? FieldsDefSet?
+// I.E. implements Foo & Bar & Baz
 ImplInterfacesDeclSet ::= IMPLEMENTS TypeName AddtlInterfacesSet?
 AddtlInterfacesSet ::= AdditionalInterface+
-AdditionalInterface ::= AMPERSAND TypeName
+AdditionalInterface ::= AMPERSAND? TypeName
 
 // I.E. interface Animal @foo {walk(distance: Int): Float}
 InterfaceTypeDef ::= INTERFACE NamedTypeDef SchemaDirectivesSetDecl? FieldsDefSet?
@@ -215,14 +223,50 @@ DirectiveLocationsConditionDef ::= ON DirectiveLocation DirectiveAddtlLocation*
 DirectiveLocation ::= IDENTIFIER
 DirectiveAddtlLocation ::= PIPE? DirectiveLocation
 
-//  -------- Schema extensions --------
+// ---------- Schema extensions ----------------------------------------------------------------------------------------
+ExtendAddDirectives ::= SchemaDirectivesSetDecl
 
+// I.E. extend schema @foo or extend schema @foo {mutation: SuperMutants}
+ExtendRootSchema ::= EXTEND SCHEMA ExtendRootSchemaAdditions
+ExtendRootSchemaAdditions ::= ExtendAddDirectives | ExtendRootSchemaAddOperations
+ExtendRootSchemaAddOperations ::= SchemaDirectivesSetDecl? RootSchemaOperationsSetDef
 
-/* End Schema Definition Language*/
+// I.E. extend scalar Foo @bar
+ExtendScalar ::= EXTEND SCALAR TypeName ExtendAddDirectives
 
-//----------------------------------------------------------------------------------------------------------------------
+// I.E. extend type Foo implements Bar or extend type Foo @bar or extend type Foo {a: B}
+ExtendObjectType ::= EXTEND TYPE TypeName ExtendObjectTypeAdditions
+ExtendObjectTypeAdditions ::=
+ExtendObjectTypeAddFields
+|
+ExtendObjectTypeAddDirectives
+|
+ExtendObjectTypeAddInterfaces
 
-/* Begin Executable definitions*/
+ExtendObjectTypeAddInterfaces ::= ImplInterfacesDeclSet
+ExtendObjectTypeAddDirectives ::= ImplInterfacesDeclSet? ExtendAddDirectives
+ExtendObjectTypeAddFields ::= ImplInterfacesDeclSet? SchemaDirectivesSetDecl? FieldsDefSet
+
+// I.E. extend interface Foo @bar or extend interface Foo {a: B}
+ExtendInterface ::= EXTEND INTERFACE TypeName ExtendInterfaceAdditions
+ExtendInterfaceAdditions ::= ExtendInterfaceAddFields | ExtendAddDirectives
+ExtendInterfaceAddFields ::= SchemaDirectivesSetDecl? FieldsDefSet
+
+// extend union Foo @baz or extend union Foo = Baz
+ExtendUnion ::= EXTEND UNION TypeName ExtendUnionAdditions
+ExtendUnionAdditions ::= ExtendUnionAddMembers | ExtendAddDirectives
+ExtendUnionAddMembers ::= SchemaDirectivesSetDecl? UnionMembersSetDef
+
+ExtendEnum ::= EXTEND ENUM TypeName ExtendEnumAdditions
+ExtendEnumAdditions ::= ExtendEnumAddValues | ExtendAddDirectives
+ExtendEnumAddValues ::= SchemaDirectivesSetDecl? EnumValuesDefSet
+
+ExtendInputObject ::= EXTEND INPUT TypeName ExtendInputObjectAdditions
+ExtendInputObjectAdditions ::= ExtendInputObjectAddMembers | ExtendAddDirectives
+ExtendInputObjectAddMembers ::= SchemaDirectivesSetDecl? InputObjectFieldsSetDef
+//<><><><><><><><><><><><><><><><><><><><><><>[Executable definitions]<><><><><><><><><><><><><><><><><><><><><><><><><>
+//<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
+
 ExecutableDef ::=
 OperationDef
 |

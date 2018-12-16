@@ -62,3 +62,84 @@ input Point2D {
 }
 
 input Empty
+
+extend type Story {
+  isHiddenLocally(a: V = 10): Boolean
+}
+
+extend type Story {
+  isHiddenLocally(a: V = 10): Boolean
+  a(a: B = 111, v: T y: VV): B @foo
+  d(a: B = 111, v: T y: VV): B @baz(a: 111) @foo @bar(a: "111")
+  b(a: B = 111 v: T y: VV): B
+}
+
+extend scalar Foo @bar @baz(a: "foobar")
+
+extend schema {
+ f: TT
+}
+
+extend schema @foo
+
+extend type Foo implements Bar & Baz Baz
+
+
+extend interface Foo {
+ baz: Bar
+}
+
+extend interface Bar @foo
+
+extend union Foo @baz
+
+extend union Foo = Baz
+
+extend union Foo @foobar @foo(a: 10) = Cool
+
+extend type Foo implements Bar & Baz Baz
+
+extend type Foo {
+ f: T
+}
+
+extend type Foo @baz
+
+extend type Foo implements Baz Foo @baz @foo
+
+extend type Foo implements Baz Foo @baz @foo {
+ t: CC @foo
+}
+
+extend interface Fooo @baz
+
+extend union Foo @foobar @foo(a: 10) = Cool YYY | VVV
+
+extend enum Vehicle @foo
+
+extend enum Vehicle {
+ CAR
+ BAZ @foo
+}
+
+extend enum Vehicle @foo @bar(a: 10) {
+ FOO
+ BAR
+}
+
+input ExampleInputObject {
+  a: String
+  b: Int!
+}
+
+extend input Foo @baz
+
+extend input Foo {
+ a: T = 10 @foo @baz(a: 10)
+ b: C!
+}
+
+extend input Foo @baz @foobar(a: "111") {
+ a: T = 10 @foo @baz(a: 10)
+ b: C!
+}
