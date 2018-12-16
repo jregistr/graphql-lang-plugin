@@ -102,6 +102,21 @@ ArrayValueDecl ::= LEFT_BRACKET ArrayMemberDecl ArrayMemberAddtlDecl* RIGHT_BRAC
 ArrayMemberDecl ::= FieldValueDecl
 ArrayMemberAddtlDecl ::= COMMA? ArrayMemberDecl
 
+// I.E. : Float or : Foobar
+CompositeFieldTypeDecl ::= COLON FieldTypeDecl
+
+// I.E. Float! or [[Float!]!]!
+FieldTypeDecl ::= BasicTypeDecl | ListTypeDecl
+BasicTypeDecl ::= TypeName REQUIRED?
+ListTypeDecl ::= LEFT_BRACKET FieldTypeDecl RIGHT_BRACKET REQUIRED?
+
+// I.E. @foo @bar(a: 10) @baz
+DirectivesDeclSet ::= DirectiveDecl+
+DirectiveDecl ::= DIRECTIVE_IDENTIFIER DirectiveArgumentsSetDecl?
+// I.E. (a: 10 b: false c: "true")
+DirectiveArgumentsSetDecl ::= LEFT_PAREN DirectiveArgumentDecl AddtlDirectiveArgumentDecl* RIGHT_PAREN
+DirectiveArgumentDecl ::= FieldName COLON FieldValueDecl
+AddtlDirectiveArgumentDecl ::= COMMA? DirectiveArgumentDecl
 
 //<><><><><><><><><><><><><><><><><><><>[Schema Definition Language]<><><><><><><><><><><><><><><><><><><><><><><><><><>
 //<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
@@ -148,40 +163,23 @@ ExtendInputObject
 
 NamedTypeDef ::= IDENTIFIER
 
-// I.E. : Float or : Foobar
-CompositeFieldTypeDecl ::= COLON FieldTypeDecl
-
-// I.E. Float! or [[Float!]!]!
-FieldTypeDecl ::= BasicTypeDecl | ListTypeDecl
-BasicTypeDecl ::= TypeName REQUIRED?
-ListTypeDecl ::= LEFT_BRACKET FieldTypeDecl RIGHT_BRACKET REQUIRED?
-
 // I.E. (a: BB = 10, c:DD)
 InputsDef ::= LEFT_PAREN InputValueSetDef RIGHT_PAREN
 
 // I.E. foo: Bar = false baz: Foobar
 InputValueSetDef ::= InputDef AddtlInputDef*
-InputDef ::= FieldName CompositeFieldTypeDecl InputDefaultValueDef? SchemaDirectivesSetDecl?
+InputDef ::= FieldName CompositeFieldTypeDecl InputDefaultValueDef? DirectivesDeclSet?
 AddtlInputDef ::= COMMA? InputDef
 InputDefaultValueDef ::= EQUALS FieldValueDecl
 
-// I.E. (a: 10 b: false c: "true")
-SchemaArgumentsSetDecl ::= LEFT_PAREN SchemaArgumentDecl AddtlSchemaArgumentDecl* RIGHT_PAREN
-SchemaArgumentDecl ::= FieldName COLON FieldValueDecl
-AddtlSchemaArgumentDecl ::= COMMA? SchemaArgumentDecl
-
-// I.E. @foo @bar(a: 10) @baz
-SchemaDirectivesSetDecl ::= SchemaDirectiveDecl+
-SchemaDirectiveDecl ::= DIRECTIVE_IDENTIFIER SchemaArgumentsSetDecl?
-
 // I.E. {a: Int b: Float}
 FieldsDefSet ::= LEFT_CURLY FieldDef AddtlFieldDef* RIGHT_CURLY
-FieldDef ::= FieldName InputsDef? CompositeFieldTypeDecl SchemaDirectivesSetDecl?
+FieldDef ::= FieldName InputsDef? CompositeFieldTypeDecl DirectivesDeclSet?
 AddtlFieldDef ::= COMMA? FieldDef
 
 
 // I.E. schema {query: Query}
-RootSchemaTypeDef ::= SCHEMA SchemaDirectivesSetDecl? RootSchemaOperationsSetDef
+RootSchemaTypeDef ::= SCHEMA DirectivesDeclSet? RootSchemaOperationsSetDef
 RootSchemaOperationsSetDef ::= LEFT_CURLY RootSchemaOperationTypeDef RootSchemaAddtlOperationTypeDef* RIGHT_CURLY
 RootSchemaOperationTypeDef ::= FieldName COLON TypeName
 RootSchemaAddtlOperationTypeDef ::= COMMA? RootSchemaOperationTypeDef
@@ -189,32 +187,32 @@ RootSchemaAddtlOperationTypeDef ::= COMMA? RootSchemaOperationTypeDef
 // ---------- TypeDefinition -------------------------------------------------------------------------------------------
 
 // I.E. type Dog implements Animal & Pet { bark(loudness: String = "Over 9000!" @foo @bar(a: 11)): Bark }
-ObjectTypeDef ::= TYPE NamedTypeDef ImplInterfacesDeclSet? SchemaDirectivesSetDecl? FieldsDefSet?
+ObjectTypeDef ::= TYPE NamedTypeDef ImplInterfacesDeclSet? DirectivesDeclSet? FieldsDefSet?
 // I.E. implements Foo & Bar & Baz
 ImplInterfacesDeclSet ::= IMPLEMENTS TypeName AddtlInterfacesSet?
 AddtlInterfacesSet ::= AdditionalInterface+
 AdditionalInterface ::= AMPERSAND? TypeName
 
 // I.E. interface Animal @foo {walk(distance: Int): Float}
-InterfaceTypeDef ::= INTERFACE NamedTypeDef SchemaDirectivesSetDecl? FieldsDefSet?
+InterfaceTypeDef ::= INTERFACE NamedTypeDef DirectivesDeclSet? FieldsDefSet?
 
 // I.E. enum Direction { NORTH, SOUTH, EAST @value("west"), WEST @value("west") }
-EnumTypeDef ::= ENUM NamedTypeDef SchemaDirectivesSetDecl? EnumValuesDefSet?
+EnumTypeDef ::= ENUM NamedTypeDef DirectivesDeclSet? EnumValuesDefSet?
 EnumValuesDefSet ::= LEFT_CURLY EnumValueDef EnumAddtlValueDef* RIGHT_CURLY
-EnumValueDef ::= EnumValue SchemaDirectivesSetDecl?
+EnumValueDef ::= EnumValue DirectivesDeclSet?
 EnumAddtlValueDef ::= COMMA? EnumValueDef
 
 // I.E. union SupersonicVehicles = Jets | Rockets
-UnionTypeDef ::= UNION NamedTypeDef SchemaDirectivesSetDecl? UnionMembersSetDef?
+UnionTypeDef ::= UNION NamedTypeDef DirectivesDeclSet? UnionMembersSetDef?
 UnionMembersSetDef ::= EQUALS UnionMemberDef UnionAddtlMemberDef*
 UnionMemberDef ::= TypeName
 UnionAddtlMemberDef ::= PIPE? UnionMemberDef
 
 // I.E. scalar DateTime @foo
-ScalarTypeDef ::= SCALAR NamedTypeDef SchemaDirectivesSetDecl?
+ScalarTypeDef ::= SCALAR NamedTypeDef DirectivesDeclSet?
 
 // I.E. input Point2D { x: Float @foo, y: Float }
-InputObjectTypeDef ::= INPUT NamedTypeDef SchemaDirectivesSetDecl? InputObjectFieldsSetDef?
+InputObjectTypeDef ::= INPUT NamedTypeDef DirectivesDeclSet? InputObjectFieldsSetDef?
 InputObjectFieldsSetDef ::= LEFT_CURLY InputValueSetDef RIGHT_CURLY
 
 // I.E. directive @example on FIELD_DEFINITION | ARGUMENT_DEFINITION
@@ -224,12 +222,12 @@ DirectiveLocation ::= IDENTIFIER
 DirectiveAddtlLocation ::= PIPE? DirectiveLocation
 
 // ---------- Schema extensions ----------------------------------------------------------------------------------------
-ExtendAddDirectives ::= SchemaDirectivesSetDecl
+ExtendAddDirectives ::= DirectivesDeclSet
 
 // I.E. extend schema @foo or extend schema @foo {mutation: SuperMutants}
 ExtendRootSchema ::= EXTEND SCHEMA ExtendRootSchemaAdditions
 ExtendRootSchemaAdditions ::= ExtendAddDirectives | ExtendRootSchemaAddOperations
-ExtendRootSchemaAddOperations ::= SchemaDirectivesSetDecl? RootSchemaOperationsSetDef
+ExtendRootSchemaAddOperations ::= DirectivesDeclSet? RootSchemaOperationsSetDef
 
 // I.E. extend scalar Foo @bar
 ExtendScalar ::= EXTEND SCALAR TypeName ExtendAddDirectives
@@ -245,25 +243,25 @@ ExtendObjectTypeAddInterfaces
 
 ExtendObjectTypeAddInterfaces ::= ImplInterfacesDeclSet
 ExtendObjectTypeAddDirectives ::= ImplInterfacesDeclSet? ExtendAddDirectives
-ExtendObjectTypeAddFields ::= ImplInterfacesDeclSet? SchemaDirectivesSetDecl? FieldsDefSet
+ExtendObjectTypeAddFields ::= ImplInterfacesDeclSet? DirectivesDeclSet? FieldsDefSet
 
 // I.E. extend interface Foo @bar or extend interface Foo {a: B}
 ExtendInterface ::= EXTEND INTERFACE TypeName ExtendInterfaceAdditions
 ExtendInterfaceAdditions ::= ExtendInterfaceAddFields | ExtendAddDirectives
-ExtendInterfaceAddFields ::= SchemaDirectivesSetDecl? FieldsDefSet
+ExtendInterfaceAddFields ::= DirectivesDeclSet? FieldsDefSet
 
 // extend union Foo @baz or extend union Foo = Baz
 ExtendUnion ::= EXTEND UNION TypeName ExtendUnionAdditions
 ExtendUnionAdditions ::= ExtendUnionAddMembers | ExtendAddDirectives
-ExtendUnionAddMembers ::= SchemaDirectivesSetDecl? UnionMembersSetDef
+ExtendUnionAddMembers ::= DirectivesDeclSet? UnionMembersSetDef
 
 ExtendEnum ::= EXTEND ENUM TypeName ExtendEnumAdditions
 ExtendEnumAdditions ::= ExtendEnumAddValues | ExtendAddDirectives
-ExtendEnumAddValues ::= SchemaDirectivesSetDecl? EnumValuesDefSet
+ExtendEnumAddValues ::= DirectivesDeclSet? EnumValuesDefSet
 
 ExtendInputObject ::= EXTEND INPUT TypeName ExtendInputObjectAdditions
 ExtendInputObjectAdditions ::= ExtendInputObjectAddMembers | ExtendAddDirectives
-ExtendInputObjectAddMembers ::= SchemaDirectivesSetDecl? InputObjectFieldsSetDef
+ExtendInputObjectAddMembers ::= DirectivesDeclSet? InputObjectFieldsSetDef
 //<><><><><><><><><><><><><><><><><><><><><><>[Executable definitions]<><><><><><><><><><><><><><><><><><><><><><><><><>
 //<><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><><>
 
@@ -272,7 +270,76 @@ OperationDef
 |
 FragmentDef
 
+OperationName ::= IDENTIFIER
+VariableName ::= VARIABLE_IDENTIFIER
 VariableReference ::= VARIABLE_IDENTIFIER
+Null_Value ::= 'null'
+
+OperationFieldValueDecl ::= COLON CompositeFieldValueDecl
+CompositeFieldValueDecl ::= Null_Value | Literal | CompositeObjectValueDecl | CompositeArrayValueDecl | EnumValue | VariableReference
+
+// I.E. { a: "foobar" b: $someVariable }
+CompositeObjectValueDecl ::= LEFT_CURLY CompositeObjectValueFieldDecl CompositeObjectValueAddtlFieldDecl* RIGHT_CURLY
+CompositeObjectValueFieldDecl ::= FieldName COLON CompositeFieldValueDecl
+CompositeObjectValueAddtlFieldDecl ::= COMMA? CompositeObjectValueFieldDecl
+
+// I.E. [1 2 $var]
+CompositeArrayValueDecl ::= LEFT_BRACKET CompositeArrayMemberDecl CompositeArrayMemberAddtlDecl* RIGHT_BRACKET
+CompositeArrayMemberDecl ::= CompositeFieldValueDecl
+CompositeArrayMemberAddtlDecl ::= COMMA? CompositeArrayMemberDecl
+
+// I.E. (a: 10 b: $varName)
+ArgumentDeclSet ::= LEFT_PAREN ArgumentDeclDecl AddtlArgumentDeclDecl* RIGHT_PAREN
+ArgumentDeclDecl ::= FieldName OperationFieldValueDecl
+AddtlArgumentDeclDecl ::= COMMA? ArgumentDeclDecl
+
+// I.E. query example($var1: Int = 10 $var2: String) {f1, alias(foo: $var1): f2}
+OperationDef ::= CompositeOperationDef SelectionSetDecl
+CompositeOperationDef ::= OperationTypeDecl OperationName? VariablesSetDef? DirectivesDeclSet?
+OperationTypeDecl ::= QUERY | MUTATION | SUBSCRIPTION
+
+// I.E. ($var1: Int = 10 $var2: String)
+VariablesSetDef ::= LEFT_PAREN VariableDef AddtlVariablesDef* RIGHT_PAREN
+VariableDef ::= VariableName CompositeFieldTypeDecl InputDefaultValueDef? DirectivesDeclSet?
+AddtlVariablesDef ::= COMMA? VariableDef
+
+// I.E. { a b c ... on Foo {...}, ... onBaz}
+SelectionSetDecl ::= LEFT_CURLY Selections RIGHT_CURLY
+Selections ::= Selection AddtlSelectionDecl*
+
+Selection ::=
+FieldSelection
+|
+FragmentSpread
+|
+InlineFragment
+AddtlSelectionDecl ::= COMMA? Selection
+
+FieldSelection ::= FieldNameDecl ArgumentDeclSet? SelectionDirectivesDeclSet? SelectionSetDecl?
+FieldNameDecl ::= AliasedFieldName | FieldName
+AliasedFieldName ::= IDENTIFIER COLON FieldName
+
+
+
+/*
+DirectivesDeclSet ::= DirectiveDecl+
+DirectiveDecl ::= DIRECTIVE_IDENTIFIER DirectiveArgumentsSetDecl?
+// I.E. (a: 10 b: false c: "true")
+DirectiveArgumentsSetDecl ::= LEFT_PAREN DirectiveArgumentDecl AddtlDirectiveArgumentDecl* RIGHT_PAREN
+DirectiveArgumentDecl ::= FieldName COLON FieldValueDecl
+AddtlDirectiveArgumentDecl ::= COMMA? DirectiveArgumentDecl
+*/
+
+/*
+// I.E. (a: 10 b: false c: "true")
+SchemaArgumentsSetDecl ::= LEFT_PAREN SchemaArgumentDecl AddtlSchemaArgumentDecl* RIGHT_PAREN
+SchemaArgumentDecl ::= FieldName COLON FieldValueDecl
+AddtlSchemaArgumentDecl ::= COMMA? SchemaArgumentDecl
+
+// I.E. @foo @bar(a: 10) @baz
+SchemaDirectivesSetDecl ::= SchemaDirectiveDecl+
+SchemaDirectiveDecl ::= DIRECTIVE_IDENTIFIER SchemaArgumentsSetDecl?
+*/
 
 
 
@@ -281,9 +348,16 @@ VariableReference ::= VARIABLE_IDENTIFIER
 
 
 
+//
+/*
+OperationDef ::= MaybeFullOperationDef? LEFT_CURLY SelectionSetDecl RIGHT_CURLY
+MaybeFullOperationDef ::= OperationTypeDecl IDENTIFIER? OperationVariablesSetDef? OperationDirectivesDeclSet?
+OperationTypeDecl ::= QUERY | MUTATION | SUBSCRIPTION
 
-
-
+OperationVariablesSetDef ::= LEFT_PAREN OperationVariableDef OperationAddtlVariableDef* RIGHT_PAREN
+OperationVariableDef ::= VARIABLE_IDENTIFIER COLON TypeDecl DefaultValueDef?
+OperationAddtlVariableDef ::= COMMA? OperationVariableDef
+*/
 
 
 

@@ -143,3 +143,9 @@ extend input Foo @baz @foobar(a: "111") {
  a: T = 10 @foo @baz(a: 10)
  b: C!
 }
+
+query foo ($a: B = 111 @foo @bar(a: "111" b: true) $b: B = 555 @foo) @bla {
+ a(b: $vv, g: "ddd" r: $bb c: [111 $bla])
+ b: B(a: 11 t: "cool" h: $var1)
+ c
+}
