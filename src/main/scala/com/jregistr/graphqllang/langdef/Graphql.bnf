@@ -12,7 +12,6 @@
     tokenTypeClass="com.jregistr.graphqllang.langdef.GraphQlLangTokenType"
 
     tokens = [
-        NOT_IMPL='NOT_YET_IMPL'
         TYPE='type'
         INPUT='input'
         ENUM='enum'
@@ -49,6 +48,7 @@
         VARIABLE_IDENTIFIER='regexp:\$([_A-Za-z][_0-9A-Za-z]*)'
         FRAGMENT_DOTS='...'
         ON='on'
+        NULL='null'
 
         IDENTIFIER="regexp:[_A-Za-z][_0-9A-Za-z]*"
         STRING_LITERAL='regexp:".*"'
@@ -85,13 +85,14 @@ TypeSystemExtension
 TypeName ::= IDENTIFIER
 FieldName ::= IDENTIFIER
 EnumValue ::= IDENTIFIER
+NullValue ::= NULL
 
 Literal ::= NUMBER_LITERAL | STRING_LITERAL | BOOLEAN_LITERAL
 BOOLEAN_LITERAL ::= 'true' | 'false'
 
 // I.E. 10 or "foobar" or [1 2 3 4] or {a: 10 b: false}.
 // Note:!!, CANNOT refer to variables via $foo
-FieldValueDecl ::= Literal | ObjectValueDecl | ArrayValueDecl | EnumValue
+FieldValueDecl ::= NullValue | Literal | ObjectValueDecl | ArrayValueDecl | EnumValue
 
 // I.E. { a: "foobar" b: true }
 ObjectValueDecl ::= LEFT_CURLY ObjectValueFieldDecl ObjectValueAddtlFieldDecl* RIGHT_CURLY
@@ -273,10 +274,10 @@ FragmentDef
 OperationName ::= IDENTIFIER
 VariableName ::= VARIABLE_IDENTIFIER
 VariableReference ::= VARIABLE_IDENTIFIER
-Null_Value ::= 'null'
+FragmentName ::= IDENTIFIER
 
 OperationFieldValueDecl ::= COLON CompositeFieldValueDecl
-CompositeFieldValueDecl ::= Null_Value | Literal | CompositeObjectValueDecl | CompositeArrayValueDecl | EnumValue | VariableReference
+CompositeFieldValueDecl ::= NullValue | Literal | CompositeObjectValueDecl | CompositeArrayValueDecl | EnumValue | VariableReference
 
 // I.E. { a: "foobar" b: $someVariable }
 CompositeObjectValueDecl ::= LEFT_CURLY CompositeObjectValueFieldDecl CompositeObjectValueAddtlFieldDecl* RIGHT_CURLY
@@ -293,8 +294,12 @@ ArgumentDeclSet ::= LEFT_PAREN ArgumentDeclDecl AddtlArgumentDeclDecl* RIGHT_PAR
 ArgumentDeclDecl ::= FieldName OperationFieldValueDecl
 AddtlArgumentDeclDecl ::= COMMA? ArgumentDeclDecl
 
+// I.E. @foo or @foo(a: $var)
+SelectionDirectivesDeclSet ::= SelectionDirectiveDecl+
+SelectionDirectiveDecl ::= DIRECTIVE_IDENTIFIER ArgumentDeclSet?
+
 // I.E. query example($var1: Int = 10 $var2: String) {f1, alias(foo: $var1): f2}
-OperationDef ::= CompositeOperationDef SelectionSetDecl
+OperationDef ::= CompositeOperationDef? SelectionSetDecl
 CompositeOperationDef ::= OperationTypeDecl OperationName? VariablesSetDef? DirectivesDeclSet?
 OperationTypeDecl ::= QUERY | MUTATION | SUBSCRIPTION
 
@@ -306,6 +311,7 @@ AddtlVariablesDef ::= COMMA? VariableDef
 // I.E. { a b c ... on Foo {...}, ... onBaz}
 SelectionSetDecl ::= LEFT_CURLY Selections RIGHT_CURLY
 Selections ::= Selection AddtlSelectionDecl*
+AddtlSelectionDecl ::= COMMA? Selection
 
 Selection ::=
 FieldSelection
@@ -313,225 +319,21 @@ FieldSelection
 FragmentSpread
 |
 InlineFragment
-AddtlSelectionDecl ::= COMMA? Selection
 
+// I.E. foo or foo @bar or foo(a: 10) @baz or alias:foo
 FieldSelection ::= FieldNameDecl ArgumentDeclSet? SelectionDirectivesDeclSet? SelectionSetDecl?
 FieldNameDecl ::= AliasedFieldName | FieldName
 AliasedFieldName ::= IDENTIFIER COLON FieldName
 
+// I.E. ...someFragment @foo
+FragmentSpread ::= FRAGMENT_DOTS FragmentName SelectionDirectivesDeclSet?
 
+// I.E. ... on Foo @bar { a: c }
+InlineFragment ::= FRAGMENT_DOTS FragmentTypeCondition? SelectionDirectivesDeclSet? SelectionSetDecl
 
-/*
-DirectivesDeclSet ::= DirectiveDecl+
-DirectiveDecl ::= DIRECTIVE_IDENTIFIER DirectiveArgumentsSetDecl?
-// I.E. (a: 10 b: false c: "true")
-DirectiveArgumentsSetDecl ::= LEFT_PAREN DirectiveArgumentDecl AddtlDirectiveArgumentDecl* RIGHT_PAREN
-DirectiveArgumentDecl ::= FieldName COLON FieldValueDecl
-AddtlDirectiveArgumentDecl ::= COMMA? DirectiveArgumentDecl
-*/
+// I.E. on Foo
+FragmentTypeCondition ::= ON TypeName
+//Note: on keyword here can be name of a type. can be the name of a field. but can't be name of a fragment.
 
-/*
-// I.E. (a: 10 b: false c: "true")
-SchemaArgumentsSetDecl ::= LEFT_PAREN SchemaArgumentDecl AddtlSchemaArgumentDecl* RIGHT_PAREN
-SchemaArgumentDecl ::= FieldName COLON FieldValueDecl
-AddtlSchemaArgumentDecl ::= COMMA? SchemaArgumentDecl
-
-// I.E. @foo @bar(a: 10) @baz
-SchemaDirectivesSetDecl ::= SchemaDirectiveDecl+
-SchemaDirectiveDecl ::= DIRECTIVE_IDENTIFIER SchemaArgumentsSetDecl?
-*/
-
-
-
-
-
-
-
-
-//
-/*
-OperationDef ::= MaybeFullOperationDef? LEFT_CURLY SelectionSetDecl RIGHT_CURLY
-MaybeFullOperationDef ::= OperationTypeDecl IDENTIFIER? OperationVariablesSetDef? OperationDirectivesDeclSet?
-OperationTypeDecl ::= QUERY | MUTATION | SUBSCRIPTION
-
-OperationVariablesSetDef ::= LEFT_PAREN OperationVariableDef OperationAddtlVariableDef* RIGHT_PAREN
-OperationVariableDef ::= VARIABLE_IDENTIFIER COLON TypeDecl DefaultValueDef?
-OperationAddtlVariableDef ::= COMMA? OperationVariableDef
-*/
-
-
-
-/*
-NamedTypeDef ::= IDENTIFIER
-NameOfSomeType ::= IDENTIFIER
-NameOfSomeField ::= IDENTIFIER
-DirectiveLocation ::= IDENTIFIER
-
-BOOLEAN_LITERAL ::= 'true' | 'false'
-Literal ::= NUMBER_LITERAL | STRING_LITERAL | BOOLEAN_LITERAL
-VariableReference ::= VARIABLE_IDENTIFIER
-StaticValue ::= IDENTIFIER
-
-SimpleFieldValueDecl ::= Literal | SimpleObjectValueDecl | SimpleArrayValuesDecl | StaticValue
-
-SimpleObjectValueDecl ::= LEFT_CURLY SimpleObjectValueFieldDecl SimpleObjectValueAddtlFieldDecl* RIGHT_CURLY
-SimpleObjectValueFieldDecl ::= NameOfSomeField COLON SimpleFieldValueDecl
-SimpleObjectValueAddtlFieldDecl ::= COMMA? SimpleObjectValueFieldDecl
-
-SimpleArrayValuesDecl ::= LEFT_BRACKET SimpleArrayInnerValDecl SimpleArrayInnerValAddtlDecl* RIGHT_BRACKET
-SimpleArrayInnerValDecl ::= SimpleFieldValueDecl
-SimpleArrayInnerValAddtlDecl ::= COMMA? SimpleArrayInnerValDecl
-
-///------------
-CompositeFieldValueDecl ::= Literal | CompositeObjectValueDecl | CompositeArrayValuesDecl | VariableReference | StaticValue
-
-CompositeArrayValuesDecl ::= LEFT_BRACKET CompositeArrayInnerValDecl CompositeArrayInnerValAddtlDecl* RIGHT_BRACKET
-CompositeArrayInnerValDecl ::= CompositeFieldValueDecl
-CompositeArrayInnerValAddtlDecl ::= COMMA? CompositeArrayInnerValDecl
-
-CompositeObjectValueDecl ::= LEFT_CURLY CompositeObjectValueFieldDecl CompositeObjectValueFieldAddtlDecl* RIGHT_CURLY
-CompositeObjectValueFieldDecl ::= NameOfSomeField COLON CompositeFieldValueDecl
-CompositeObjectValueFieldAddtlDecl ::= COMMA? CompositeObjectValueFieldDecl
-
-TypeDecl ::= BasicTypeDecl | ListTypeDecl
-BasicTypeDecl ::= NameOfSomeType REQUIRED?
-ListTypeDecl ::= LEFT_BRACKET BasicTypeDecl RIGHT_BRACKET REQUIRED?
-
-//Distinction to Note and remember
-//Argument definition is defining the arguments a field takes. I.E. foo(a: A, b: B): Bar
-//Argument declaration stating the named arguments being passed. I.E. foo(a: "Cool", b: "cooler") {...}
-SchemaArgumentsDeclSet ::= LEFT_PAREN SchemaArgumentDecl SchemaArgumentAddtlDecl* RIGHT_PAREN
-SchemaArgumentDecl ::= NameOfSomeField COLON SimpleFieldValueDecl
-SchemaArgumentAddtlDecl ::= COMMA? SchemaArgumentDecl
-
-OperationArgumentDeclSet ::= LEFT_PAREN OperationArgumentDecl OperationArgumentAddtlDecl* RIGHT_PAREN
-OperationArgumentDecl ::= NameOfSomeField COLON CompositeFieldValueDecl
-OperationArgumentAddtlDecl ::= COMMA? OperationArgumentDecl
-
-
-ArgumentsDefSet ::= LEFT_PAREN ArgumentDef ArgumentAddtlDef* RIGHT_PAREN
-ArgumentDef ::= NamedTypeDef COLON TypeDecl DefaultValueDef? SchemaDirectivesDeclSet?
-DefaultValueDef ::= EQUALS SimpleFieldValueDecl
-ArgumentAddtlDef ::= COMMA ArgumentDef
-
-FieldDefName ::= IDENTIFIER
-
-MemberFieldsSetDef ::= LEFT_CURLY MemberFieldDef MemberFieldAddtlDef* RIGHT_CURLY
-MemberFieldDef ::= FieldDefName ArgumentsDefSet? COLON TypeDecl SchemaDirectivesDeclSet?
-MemberFieldAddtlDef ::= COMMA? MemberFieldDef
-
-SimpleMemberFieldsSetDef ::= LEFT_CURLY SimpleMemberFieldDef SimpleAddtlMemberFieldDef* RIGHT_CURLY
-SimpleMemberFieldDef ::= FieldDefName COLON TypeDecl
-SimpleAddtlMemberFieldDef ::= COMMA? SimpleMemberFieldDef
-
-// Directive declaration is using directive such as on a field or object. I.E. field {a@foo}
-// Directive definition is defining some directive. i.e. directive @foo on Field
-SchemaDirectivesDeclSet ::= SchemaDirectiveDecl*
-SchemaDirectiveDecl ::= DIRECTIVE_IDENTIFIER SchemaArgumentsDeclSet?
-
-OperationDirectivesDeclSet ::= OperationDirectiveDecl*
-OperationDirectiveDecl ::= DIRECTIVE_IDENTIFIER OperationArgumentDeclSet?
-
-
-
-TypeDef ::=
-RootSchemaTypeDef
-|
-ObjectTypeDef
-|
-InterfaceTypeDef
-|
-EnumTypeDef
-|
-DirectiveDef
-|
-UnionTypeDef
-|
-ScalarTypeDef
-|
-ExtendScalarDef
-|
-InputObjectTypeDef
-|
-ExtendTypeDef
-
-RootSchemaTypeDef ::= SCHEMA SchemaDirectivesDeclSet? RootSchemaOperationTypesDefSet
-RootSchemaOperationTypesDefSet ::= LEFT_CURLY RootSchemaOperationTypeDef RootSchemaAddtlOperationTypeDef* RIGHT_CURLY
-RootSchemaOperationTypeDef ::= IDENTIFIER COLON NameOfSomeType
-RootSchemaAddtlOperationTypeDef ::= COMMA? RootSchemaOperationTypeDef
-
-ObjectTypeDef ::= TYPE NamedTypeDef ObjectTypeImplInterfacesDef? SchemaDirectivesDeclSet? MemberFieldsSetDef
-ObjectTypeImplInterfacesDef ::= IMPLEMENTS NameOfSomeType ObjectTypeInterfaceAddtlMember*
-ObjectTypeInterfaceAddtlMember ::= COMMA NameOfSomeType
-
-InterfaceTypeDef ::= INTERFACE NamedTypeDef MemberFieldsSetDef
-
-EnumTypeDef ::= ENUM NamedTypeDef EnumValuesSetDef
-EnumValuesSetDef ::= LEFT_CURLY EnumValueDef EnumAddtlValueDef* RIGHT_CURLY
-EnumValueDef ::= IDENTIFIER
-EnumAddtlValueDef ::= COMMA? IDENTIFIER
-
-DirectiveDef ::= DIRECTIVE DIRECTIVE_IDENTIFIER ArgumentsDefSet? DirectiveDefLocCondSet
-DirectiveDefLocCondSet ::= 'on' DirectiveLocation DirectiveDefLocAddtlCond*
-DirectiveDefLocAddtlCond ::= PIPE DirectiveLocation
-
-UnionTypeDef ::= UNION NamedTypeDef EQUALS UnionMemberDecl UnionAddtlMemberDecl*
-UnionMemberDecl ::= NameOfSomeType
-UnionAddtlMemberDecl ::= PIPE UnionMemberDecl
-
-ScalarTypeDef ::= SCALAR NamedTypeDef SchemaDirectivesDeclSet?
-
-ExtendScalarDef ::= EXTEND SCALAR NamedTypeDef SchemaDirectivesDeclSet?
-
-InputObjectTypeDef ::= INPUT NamedTypeDef SimpleMemberFieldsSetDef
-
-ExtendTypeDef ::= EXTEND TYPE NameOfSomeType MemberFieldsSetDef
-
-
-ExecutableDef ::=
-OperationDef
-|
-FragmentDef
-
-OperationDef ::= MaybeFullOperationDef? LEFT_CURLY SelectionSetDecl RIGHT_CURLY
-MaybeFullOperationDef ::= OperationTypeDecl IDENTIFIER? OperationVariablesSetDef? OperationDirectivesDeclSet?
-OperationTypeDecl ::= QUERY | MUTATION | SUBSCRIPTION
-
-OperationVariablesSetDef ::= LEFT_PAREN OperationVariableDef OperationAddtlVariableDef* RIGHT_PAREN
-OperationVariableDef ::= VARIABLE_IDENTIFIER COLON TypeDecl DefaultValueDef?
-OperationAddtlVariableDef ::= COMMA? OperationVariableDef
-
-SelectionSetDecl ::= Selection AddtlSelection*
-
-Selection ::=
-FieldSelection
-|
-FragmentSpread
-|
-InlineFragment
-
-AddtlSelection ::= COMMA? Selection
-
-FieldSelection ::= FieldAlias? NameOfSomeField OperationArgumentDeclSet? OperationDirectivesDeclSet? FieldExpansionDecl?
-FieldAlias ::= IDENTIFIER COLON
-FieldExpansionDecl ::= LEFT_CURLY SelectionSetDecl RIGHT_CURLY
-
-FragmentSpread ::= FRAGMENT_DOTS IDENTIFIER OperationDirectivesDeclSet?
-
-InlineFragment ::= FRAGMENT_DOTS FragmentTypeCondition OperationDirectivesDeclSet? FieldExpansionDecl
-
-FragmentTypeCondition ::= FRAGMENT_ON NameOfSomeType
-
-FragmentDef ::= FRAGMENT IDENTIFIER FragmentTypeCondition OperationDirectivesDeclSet? LEFT_CURLY SelectionSetDecl RIGHT_CURLY
- */
-
-
-/*
-MaybeAddtlInterfaces?
-
-MaybeAddtlInterfaces ::= AddtlInterfacesSetDecl | LegacyAddtlInterfacesSetDecl
-AddtlInterfacesSetDecl ::= AddtlInterfaceDecl+
-AddtlInterfaceDecl ::= AMPERSAND TypeName
-LegacyAddtlInterfacesSetDecl ::= AddtlLegacyInterfaceDecl+
-AddtlLegacyInterfaceDecl ::= COMMA TypeName
-*/
+// I.E. fragment Example on Foo @bar { a }
+FragmentDef ::= FRAGMENT FragmentName FragmentTypeCondition SelectionDirectivesDeclSet? SelectionSetDecl

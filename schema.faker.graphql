@@ -29,9 +29,14 @@ type Employee {
   company: Company
 }
 
+type on {
+  a: String
+}
+
 type Query {
   employee(id: ID = "111"): Employee
   company(id: ID): Company
   allCompanies: [Company!]
   __mmm:Int
+  getOn: on
 }

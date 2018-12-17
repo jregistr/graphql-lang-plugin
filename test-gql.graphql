@@ -149,3 +149,45 @@ query foo ($a: B = 111 @foo @bar(a: "111" b: true) $b: B = 555 @foo) @bla {
  b: B(a: 11 t: "cool" h: $var1)
  c
 }
+
+{
+ a(b: $vv, g: "ddd" r: $bb c: [111 $bla])
+ b: B(a: 11 t: "cool" h: $var1)
+ c
+}
+
+{
+ a(b: $vv, g: "ddd" r: $bb c: [111 $bla]) @bar @foobar(a: "100")
+ b: B(a: 11 t: "cool" h: $var1)
+ c @foo(a: 100 b: $bla) d: foo @foo(b: true)
+}
+
+{
+ a(b: $vv, g: "ddd" r: $bb c: [111 $bla]) @bar @foobar(a: "100")
+ b: B(a: 11 t: "cool" h: $var1)
+ c @foo(a: 100 b: $bla) d: foo @foo(b: true)
+ ... Cool @foo
+}
+
+{
+ a(b: $vv, g: "ddd" r: $bb c: [111 $bla]) @bar @foobar(a: "100")
+ b: B(a: 11 t: "cool" h: $var1)
+ c @foo(a: 100 b: $bla)
+ d: foo @foo(b: true c: null) {
+  a
+  b {
+     a
+     b
+  }
+ }
+}
+
+query foo ($a: B = 111 @foo @bar(a: "111" b: true) $b: B = 555 @foo) @bla {
+ a: b @foo
+ ... on Foo @foo @bar(a: true) {
+    a
+ }
+ ... @include {
+   b
+ }
+}

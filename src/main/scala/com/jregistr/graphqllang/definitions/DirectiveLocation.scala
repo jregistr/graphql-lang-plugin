@@ -1,4 +1,4 @@
-package com.jregistr.graphqllang.psi
+package com.jregistr.graphqllang.definitions
 
 sealed trait DirectiveLocation {
   val schemaValue: String
