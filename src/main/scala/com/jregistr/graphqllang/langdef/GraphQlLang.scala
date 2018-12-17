@@ -1,8 +1,10 @@
 package com.jregistr.graphqllang.langdef
 
 import com.intellij.lang.Language
+import com.intellij.lexer.FlexAdapter
 import com.intellij.openapi.fileTypes.{FileTypeConsumer, FileTypeFactory, LanguageFileType}
 import com.intellij.psi.tree.IElementType
+import com.jregistr.graphqllang.lexer._GraphQlLexer
 import com.jregistr.graphqllang.util.GraphQlLangIcons
 import javax.swing.Icon
 
@@ -23,8 +25,9 @@ object GraphQlLangFileType extends LanguageFileType(GraphQlLang) {
 class GraphQlLangFileTypeFactory extends FileTypeFactory {
 
   override def createFileTypes(consumer: FileTypeConsumer): Unit = consumer.consume(GraphQlLangFileType)
-
 }
+
+class GraphQlLangElementType(debugName: String) extends IElementType(debugName, GraphQlLang)
 
 class GraphQlLangTokenType(debugName: String) extends IElementType(debugName, GraphQlLang) {
 
@@ -32,4 +35,6 @@ class GraphQlLangTokenType(debugName: String) extends IElementType(debugName, Gr
 
 }
 
-class GraphQlLangElementType(debugName: String) extends IElementType(debugName, GraphQlLang)
+class GraphQlLangLexerAdapter extends FlexAdapter(new _GraphQlLexer(null)) {
+
+}

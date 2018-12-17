@@ -24,14 +24,17 @@ dependencies {
 
 intellij {
     version '2018.3' //https://www.jetbrains.com/intellij-repository/releases
+    plugins = ['org.jetbrains.idea.grammar:2017.1.6', 'PsiViewer:183.2153']
 }
+
 patchPluginXml {
     changeNotes """
       This is the initial release.<br>
       """
 }
 
-sourceSets.main.java.srcDirs = ['src/main/generated', 'src/main/java']
+sourceSets.main.java.srcDirs = []
+sourceSets.main.scala.srcDirs = ['src/main/scala', 'src/main/generated', 'src/main/java']
 
 // import is optional to make task creation easier
 import org.jetbrains.grammarkit.tasks.*
@@ -46,7 +49,7 @@ grammarKit {
 
 task generateGraphQlLexer(type: GenerateLexer) {
     // source flex file
-    source = "src/main/scala/com/jregistr/graphqllang/langdef/_GraphQlLexer.flex"
+    source = "src/main/scala/com/jregistr/graphqllang/lexer/_GraphQlLexer.flex"
 
     // target directory for lexer
     targetDir = "src/main/generated/com/jregistr/graphqllang/lexer/"
